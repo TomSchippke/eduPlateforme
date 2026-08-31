@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     // Bonus: add 1 bonus chat for today
     await prisma.quotaChat.upsert({
       where: { eleveId_date: { eleveId: eleve.id, date: today } },
-      update: { bonusChats: { increment: 1 } },
+      update: { bonusChats: { increment: 1 }, hasRequestedMore: false },
       create: {
         eleveId: eleve.id,
         date: today,

@@ -99,6 +99,7 @@ export function ChatInterface({
   const [selectedKeyword, setSelectedKeyword] = useState<string>("");
   const [showConfig, setShowConfig] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [requestedBonus, setRequestedBonus] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -471,7 +472,8 @@ export function ChatInterface({
                 </div>
               </div>
 
-              {selectedChapitresRevise.length === 1 && (
+              {selectedChapitresRevise.length === 1 && 
+                (selectedGroupe.chapitres.find(c => c.id === selectedChapitresRevise[0])?.focusConcepts?.length ?? 0) > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Concept clé à cibler (optionnel)
@@ -529,7 +531,7 @@ export function ChatInterface({
                 handleSend("Je suis prêt(e) à réviser, pose-moi la première question !");
               }
             }}
-            disabled={mode === "EXPLIQUE" && !selectedGroupe}
+            disabled={(mode === "EXPLIQUE" && !selectedGroupe) || (mode === "REVISE" && exerciseTypes.length === 0)}
           >
             <Sparkles className="h-4 w-4" />
             Commencer
@@ -638,7 +640,25 @@ export function ChatInterface({
       {quotaRemaining <= 0 && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-3">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          Tu as utilisé tous tes chats du jour. Reviens demain ou demande à ton professeur des chats bonus.
+          Tu as utilisé tous tes chats du jour. Reviens demain ou 
+          {requestedBonus ? (
+            <span className="font-medium text-emerald-600">demande envoyée au professeur !</span>
+          ) : (
+            <button 
+              onClick={async () => {
+                try {
+                  await fetch("/api/eleve/request-chats", { method: "POST" });
+                  setRequestedBonus(true);
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className="underline font-medium hover:text-red-900"
+            >
+              demande à ton professeur des chats bonus
+            </button>
+          )}
+          .
         </div>
       )}
 

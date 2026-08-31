@@ -14,6 +14,7 @@ interface EleveQuota {
   todayUsed: number;
   todayMax: number;
   todayBonus: number;
+  hasRequestedMore: boolean;
 }
 
 export function QuotasManager({ eleves }: { eleves: EleveQuota[] }) {
@@ -65,8 +66,14 @@ export function QuotasManager({ eleves }: { eleves: EleveQuota[] }) {
                 const remaining = e.todayMax + e.todayBonus - e.todayUsed;
                 return (
                   <tr key={e.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900 flex items-center gap-2">
                       {e.firstName} {e.lastName}
+                      {e.hasRequestedMore && (
+                        <span className="flex h-2 w-2 relative" title="Demande de chats en attente">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="text-sm font-semibold text-slate-700">{e.defaultQuota}</span>

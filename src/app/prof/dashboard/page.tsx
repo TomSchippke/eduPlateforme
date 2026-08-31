@@ -67,6 +67,18 @@ export default async function ProfDashboardPage() {
     },
   });
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const requestsCount = await prisma.quotaChat.count({
+    where: {
+      eleve: {
+        memberships: { some: { groupe: { profId: tenantId, isArchived: false } } }
+      },
+      date: today,
+      hasRequestedMore: true,
+    }
+  });
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Welcome */}
@@ -78,6 +90,27 @@ export default async function ProfDashboardPage() {
           Voici un aperçu de votre espace
         </p>
       </div>
+
+      {requestsCount > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <MessageCircle className="h-5 w-5 text-red-600" />
+            </div>
+            <div>
+              <p className="font-medium text-red-800">Demandes de chats IA en attente</p>
+              <p className="text-sm text-red-600 mt-0.5">
+                {requestsCount} élève{requestsCount > 1 ? "s ont" : " a"} demandé des chats supplémentaires aujourd'hui.
+              </p>
+            </div>
+          </div>
+          <Link href="/prof/quotas">
+            <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-100 hover:text-red-800 shrink-0">
+              Voir les demandes
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

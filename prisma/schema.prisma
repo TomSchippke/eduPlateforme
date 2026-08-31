@@ -343,12 +343,13 @@ model Message {
 }
 
 model QuotaChat {
-  id         String   @id @default(cuid())
-  eleveId    String   @map("eleve_id")
-  date       DateTime @db.Date
-  chatsUsed  Int      @default(0) @map("chats_used")
-  chatsMax   Int      @map("chats_max")
-  bonusChats Int      @default(0) @map("bonus_chats")
+  id               String   @id @default(cuid())
+  eleveId          String   @map("eleve_id")
+  date             DateTime @db.Date
+  chatsUsed        Int      @default(0) @map("chats_used")
+  chatsMax         Int      @map("chats_max")
+  bonusChats       Int      @default(0) @map("bonus_chats")
+  hasRequestedMore Boolean  @default(false) @map("has_requested_more")
 
   eleve User @relation(fields: [eleveId], references: [id], onDelete: Cascade)
 

@@ -35,6 +35,7 @@ export default async function QuotasPage() {
     todayUsed: e.quotas[0]?.chatsUsed ?? 0,
     todayMax: e.quotas[0]?.chatsMax ?? e.defaultQuota,
     todayBonus: e.quotas[0]?.bonusChats ?? 0,
+    hasRequestedMore: e.quotas[0]?.hasRequestedMore ?? false,
   }));
 
   return <QuotasManager eleves={data} />;
