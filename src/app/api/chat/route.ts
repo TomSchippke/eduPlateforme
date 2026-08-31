@@ -125,8 +125,8 @@ export async function POST(request: Request) {
     }
 
     // Get or create conversation
-    let conversation;
-    let groupeName = "lycée/BTS"; // default fallback
+    let conversation: any;
+    let groupeName = "Nom du Groupe Indisponible"; // default fallback
     let focusConcepts: string[] = [];
     let availableTags: string[] = [];
     let teacherNote: string | null = null;
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
     }
 
     if (conversationId) {
-      conversation = await prisma.conversation.findFirst({
+      conversation = (await prisma.conversation.findFirst({
         where: { id: conversationId, eleveId: user.id },
         include: {
           messages: {
@@ -173,11 +173,11 @@ export async function POST(request: Request) {
             take: 20,
           },
         },
-      });
+      })) as any;
     }
 
     if (!conversation) {
-      conversation = await prisma.conversation.create({
+      conversation = (await prisma.conversation.create({
         data: {
           eleveId: user.id,
           groupeId,
@@ -191,9 +191,9 @@ export async function POST(request: Request) {
           notionsToReview: [],
           exerciseTypes: exerciseTypes && exerciseTypes.length > 0 ? exerciseTypes : ["EXERCICE", "QCM", "OPEN"],
           selectedKeyword: selectedKeyword || null,
-        },
+        } as any,
         include: { messages: true },
-      });
+      })) as any;
     }
 
     let chunks: any[] = [];
@@ -280,7 +280,7 @@ export async function POST(request: Request) {
       }
 
       let newChunks: any[] = [];
-      
+
       if (conversation.selectedKeyword) {
         if (nextQuestionSubtype === 'ADAPT_EXISTING') {
           const courseChunks = await searchChunks(conversation.selectedKeyword, [nextChapterId as string], { topK: 2 });
@@ -357,7 +357,7 @@ export async function POST(request: Request) {
     }
 
     // Build message history
-    const history: LLMMessage[] = conversation.messages.map((m) => ({
+    const history: LLMMessage[] = conversation.messages.map((m: any) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     }));

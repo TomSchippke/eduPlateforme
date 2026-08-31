@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, Brain, ArrowRight, ArrowLeft, FlipHorizontal } from "lucide-react";
+import { Sparkles, Brain, ArrowRight, ArrowLeft, FlipHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Flashcard {
@@ -44,8 +44,39 @@ export default function FlashcardsPage() {
     }, 150);
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent card flip
+    if (!confirm("Es-tu sûr(e) de vouloir supprimer définitivement cette flashcard ?")) return;
+    
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/eleve/flashcards/${flashcards[currentIndex].id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Erreur lors de la suppression");
+      
+      const newFlashcards = [...flashcards];
+      newFlashcards.splice(currentIndex, 1);
+      
+      setIsFlipped(false);
+      setTimeout(() => {
+        setFlashcards(newFlashcards);
+        if (currentIndex >= newFlashcards.length) {
+          setCurrentIndex(Math.max(0, newFlashcards.length - 1));
+        }
+        setIsDeleting(false);
+      }, 150);
+    } catch (err) {
+      console.error(err);
+      setIsDeleting(false);
+      alert("Une erreur est survenue lors de la suppression.");
+    }
+  };
+
   const handleFlip = () => {
-    setIsFlipped(!isFlipped);
+    if (!isDeleting) setIsFlipped(!isFlipped);
   };
 
   if (loading) {
@@ -87,6 +118,15 @@ export default function FlashcardsPage() {
 
               {/* Front (Question) */}
               <div className="absolute inset-0 backface-hidden card p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-white border-2 border-indigo-100 shadow-lg hover:border-indigo-300 transition-colors">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
+                  title="Supprimer la flashcard définitivement"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
                 <p className="text-sm font-semibold text-indigo-500 uppercase tracking-wider mb-6">Question</p>
                 <h3 className="text-xl sm:text-3xl font-medium text-slate-800 leading-relaxed">
                   {flashcards[currentIndex].question}
@@ -99,6 +139,15 @@ export default function FlashcardsPage() {
 
               {/* Back (Answer) */}
               <div className="absolute inset-0 backface-hidden card p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-indigo-50 border-2 border-indigo-200 rotate-y-180 shadow-lg">
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors z-10"
+                  title="Supprimer la flashcard définitivement"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
                 <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wider mb-6">Réponse</p>
                 <div className="text-lg sm:text-2xl font-medium text-slate-700 leading-relaxed max-h-full overflow-y-auto">
                   {flashcards[currentIndex].reponse}
