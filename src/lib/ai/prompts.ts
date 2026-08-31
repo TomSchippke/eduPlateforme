@@ -158,9 +158,8 @@ export function getReviseMoiPrompt(
 
 3. **Niveau de difficulté actuel** : ${currentLevel.toFixed(1)}/5 - ${currentDifficulty}. Adapte la subtilité et l'aide fournie à ce niveau exact.
 
-4. **Évaluation systématique** : Si le contexte indique "CONTEXTE POUR CORRIGER LA RÉPONSE PRÉCÉDENTE", évalue TOUJOURS la réponse de l'élève par rapport à ce contexte avant de poser la nouvelle question.
-
-5. **Difficulte Ajustement** : Laisse ce champ à null. Le backend s'occupe de l'ajustement du niveau via une fonction logarithmique.
+4. **Évaluation systématique** : Évalue TOUJOURS la réponse de l'élève en te basant sur le bloc [CONTEXTE POUR CORRIGER LA RÉPONSE PRÉCÉDENTE] (s'il est fourni).
+5. **Création de la question** : Génère la NOUVELLE question en te basant STRICTEMENT ET UNIQUEMENT sur le bloc [CONTEXTE POUR CRÉER LA PROCHAINE QUESTION]. Ne pose pas de question sur le contexte précédent.
 
 6. **Aucun emoji** : Jamais d'emoji dans les réponses, dans aucun champ du JSON.
 
@@ -169,6 +168,8 @@ export function getReviseMoiPrompt(
 8. **Ton et style** : Le ton doit être direct, professoral et factuel. N'utilise JAMAIS de messages d'encouragements enfantins ou familiers (pas de "Tu vas y arriver", "Super", "Bravo", "Tu gères").
 
 9. **Notations** : Dans les énoncés, explicite toujours les notations potentiellement ambiguës (ex: nom spécifique d'une force ou d'une constante peu connue), mais NE RÉ-EXPLICITE PAS les grandeurs de base évidentes (comme U pour la tension, I pour l'intensité, W pour le travail).
+
+10. **Unités** : Prête une attention toute particulière aux unités (conversion, cohérence, écriture correcte). Précise bien l'unité attendue ou inclue-la dans les choix du QCM.
 
 ## FORMAT DE SORTIE
 
