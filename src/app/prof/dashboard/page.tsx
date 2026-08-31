@@ -31,8 +31,8 @@ export default async function ProfDashboardPage() {
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.count({
-      where: { 
-        role: "ELEVE", 
+      where: {
+        role: "ELEVE",
         isActive: true,
         memberships: {
           some: {
@@ -83,9 +83,9 @@ export default async function ProfDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Groupes actifs", value: groupes.length, icon: FolderOpen, color: "text-blue-600 bg-blue-100" },
-          { label: "Élèves", value: eleveCount, icon: Users, color: "text-emerald-600 bg-emerald-100" },
-          { label: "Documents", value: documentCount, icon: FileText, color: "text-amber-600 bg-amber-100" },
-          { label: "Docs indexés", value: indexedDocs, icon: MessageCircle, color: "text-purple-600 bg-purple-100" },
+          { label: "Élèves inscrits", value: eleveCount, icon: Users, color: "text-emerald-600 bg-emerald-100" },
+          { label: "Documents déposés", value: documentCount, icon: FileText, color: "text-amber-600 bg-amber-100" },
+          { label: "Documents indexés", value: indexedDocs, icon: MessageCircle, color: "text-purple-600 bg-purple-100" },
         ].map((stat) => (
           <div key={stat.label} className="card p-5">
             <div className="flex items-center gap-3">

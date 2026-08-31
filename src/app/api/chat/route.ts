@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     if (dbUser && dbUser.passions && dbUser.passions.length > 0) {
       if (mode === "REVISE") {
         // Une chance sur deux d'utiliser une passion, sinon on laisse général
-        if (Math.random() < 0.5) {
+        if (Math.random() < 0.6) {
           const randomPassion = dbUser.passions[Math.floor(Math.random() * dbUser.passions.length)];
           passions = [randomPassion];
         }
@@ -144,9 +144,9 @@ export async function POST(request: Request) {
     }
 
     if (groupeId) {
-      const groupe = await prisma.groupe.findUnique({ 
-        where: { id: groupeId }, 
-        select: { name: true, focusConcepts: true, availableTags: true } 
+      const groupe = await prisma.groupe.findUnique({
+        where: { id: groupeId },
+        select: { name: true, focusConcepts: true, availableTags: true }
       });
       if (groupe) {
         groupeName = groupe.name;
@@ -195,7 +195,7 @@ export async function POST(request: Request) {
     let chunks: any[] = [];
     let citations: any[] = [];
     let context = "";
-    
+
     let nextChapterId: string | null = null;
     let nextQuestionType: QuestionType | null = null;
     let chapterStreak = 0;
@@ -232,7 +232,7 @@ export async function POST(request: Request) {
       }
 
       const validChapters = chapitreIdsToRevise;
-      
+
       if (!conversation.currentChapterId || validChapters.length <= 1) {
         nextChapterId = validChapters[Math.floor(Math.random() * validChapters.length)];
         chapterStreak = 1;
@@ -282,21 +282,21 @@ export async function POST(request: Request) {
         newChunks = await getRandomChunks([nextChapterId as string], 2, ['COURS', 'AUTRE']);
       }
 
-      const lastQuestionChunks = conversation.lastQuestionChunks 
-        ? (typeof conversation.lastQuestionChunks === 'string' ? JSON.parse(conversation.lastQuestionChunks) : conversation.lastQuestionChunks) 
+      const lastQuestionChunks = conversation.lastQuestionChunks
+        ? (typeof conversation.lastQuestionChunks === 'string' ? JSON.parse(conversation.lastQuestionChunks) : conversation.lastQuestionChunks)
         : [];
-      
+
       context = `[CONTEXTE POUR CORRIGER LA RÉPONSE PRÉCÉDENTE]\n${buildContext(lastQuestionChunks as any)}\n\n[CONTEXTE POUR CRÉER LA PROCHAINE QUESTION]\n${buildContext(newChunks)}`;
       citations = formatCitations(newChunks);
       chunks = newChunks;
 
       // Si le chapitre est choisi, on fusionne les tags et concepts
       if (nextChapterId) {
-         const ch = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { focusConcepts: true, availableTags: true } });
-         if (ch) {
-           focusConcepts = Array.from(new Set([...focusConcepts, ...ch.focusConcepts]));
-           availableTags = Array.from(new Set([...availableTags, ...ch.availableTags]));
-         }
+        const ch = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { focusConcepts: true, availableTags: true } });
+        if (ch) {
+          focusConcepts = Array.from(new Set([...focusConcepts, ...ch.focusConcepts]));
+          availableTags = Array.from(new Set([...availableTags, ...ch.availableTags]));
+        }
       }
 
       // Fetch level
@@ -351,7 +351,7 @@ export async function POST(request: Request) {
       try {
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
-        
+
         // Log mistake if present
         if (data.correction && data.correction.est_correct === false && data.correction.error_type) {
           await prisma.studentMistakeLog.create({
@@ -379,14 +379,14 @@ export async function POST(request: Request) {
             cleanedResponse = data.explication;
           }
         }
-        
+
         if (data.correction) {
           const isCorrect = data.correction.est_correct;
           let correctionText = "";
           if (isCorrect === true) correctionText = "✅ **Correct !**";
           else if (isCorrect === false) correctionText = "❌ **Incorrect.**";
           else correctionText = "💡 **Indication :**";
-          
+
           // Prepend the correction to the main explication
           cleanedResponse = `${correctionText}\n\n${cleanedResponse}`;
         }
@@ -400,7 +400,7 @@ export async function POST(request: Request) {
         const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
 
         let isCorrectAnswer: boolean | null = false;
-        
+
         if (data.correction) {
           isCorrectAnswer = data.correction.est_correct;
         }
@@ -455,7 +455,7 @@ export async function POST(request: Request) {
           const prevLevelRow = await prisma.studentChapterLevel.findUnique({
             where: { eleveId_chapitreId: { eleveId: user.id, chapitreId: conversation.currentChapterId } }
           });
-          
+
           const prevLvl = prevLevelRow ? calculateDecayedLevel(prevLevelRow.level, prevLevelRow.updatedAt) : 3.0;
           const { newLevel, newHistory } = computeNextLevel(
             prevLvl,
@@ -496,7 +496,7 @@ export async function POST(request: Request) {
           if (isCorrect === true) cleanedResponse += "✅ **Correct !**\n\n";
           else if (isCorrect === false) cleanedResponse += "❌ **Incorrect.**\n\n";
           else cleanedResponse += "💡 **Indication :**\n\n";
-          
+
           cleanedResponse += `${data.correction.explication}\n\n`;
         }
 
@@ -518,10 +518,10 @@ export async function POST(request: Request) {
           cleanedResponse += `- Notions à revoir : ${data.resume_session.notions_a_revoir.join(", ")}\n\n`;
           cleanedResponse += `💡 **Conseil** : ${data.resume_session.conseil}`;
         }
-        
+
         let chapterTitle = null;
         if (nextChapterId) {
-          const chapInfo = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { title: true }});
+          const chapInfo = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { title: true } });
           if (chapInfo) chapterTitle = chapInfo.title;
         }
       } catch (e) {
@@ -532,7 +532,7 @@ export async function POST(request: Request) {
 
     let finalChapterTitle = null;
     if (nextChapterId) {
-      const chapInfo = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { title: true }});
+      const chapInfo = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { title: true } });
       if (chapInfo) finalChapterTitle = chapInfo.title;
     }
 

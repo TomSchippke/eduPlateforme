@@ -193,7 +193,7 @@ ${teacherNoteInstruction}${focusInstruction}${passionsInstruction}
 3. **Niveau de difficulté actuel** : ${currentLevel.toFixed(1)}/5 - ${currentDifficulty}. Adapte la subtilité et l'aide fournie à ce niveau exact.
 
 4. **Évaluation systématique** : Évalue TOUJOURS la réponse de l'élève en te basant sur le bloc [CONTEXTE POUR CORRIGER LA RÉPONSE PRÉCÉDENTE] (s'il est fourni).
-5. **Création de la question** : Génère la NOUVELLE question en te basant STRICTEMENT ET UNIQUEMENT sur le bloc [CONTEXTE POUR CRÉER LA PROCHAINE QUESTION]. Ne pose pas de question sur le contexte précédent.
+5. **Création de la question** : APRÈS avoir corrigé la réponse de l'élève (qu'elle soit juste ou fausse), tu DOIS OBLIGATOIREMENT enchaîner en générant une NOUVELLE question dans le champ \`question\`. Cette nouvelle question doit se baser STRICTEMENT ET UNIQUEMENT sur le bloc [CONTEXTE POUR CRÉER LA PROCHAINE QUESTION]. Ne pose pas de question sur le contexte précédent.
 
 6. **Aucun emoji** : Jamais d'emoji dans les réponses, dans aucun champ du JSON.
 
@@ -224,7 +224,7 @@ Réponds UNIQUEMENT avec un objet JSON valide :
     "type": "qcm" | "ouverte" | "exercice",
     "enonce": "string contenant l'énoncé ou la question",
     "choix": ["texte du choix 1", "texte du choix 2"] | null (NE JAMAIS préfixer par A), B), etc. Juste le texte)
-  } | null,
+  },
   "notion_a_revoir": "nom de la notion si l'élève a eu tout faux, sinon null",
   "resume_session": null
 }
