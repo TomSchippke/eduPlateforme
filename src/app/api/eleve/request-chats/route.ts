@@ -29,14 +29,14 @@ export async function POST(request: Request) {
     // Upsert the quota to ensure it exists, and set hasRequestedMore to true
     await prisma.quotaChat.upsert({
       where: { eleveId_date: { eleveId: user.id, date: today } },
-      update: { hasRequestedMore: true },
+      update: { hasRequestedMore: true } as any,
       create: {
         eleveId: user.id,
         date: today,
         chatsUsed: dbUser.defaultQuota, // Assuming they used it all if they request more
         chatsMax: dbUser.defaultQuota,
         hasRequestedMore: true,
-      },
+      } as any,
     });
 
     return NextResponse.json({ success: true });

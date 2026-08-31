@@ -76,7 +76,7 @@ export default async function ProfDashboardPage() {
       },
       date: today,
       hasRequestedMore: true,
-    }
+    } as any
   });
 
   return (
