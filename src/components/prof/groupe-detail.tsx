@@ -566,6 +566,16 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
           loading={loading}
         />
       )}
+      {editDS && (
+        <EditDSModal
+          ds={editDS}
+          chapitres={groupe.chapitres}
+          open={!!editDS}
+          onClose={() => setEditDS(null)}
+          onSubmit={(title, date, keywords, chapitreIds) => handleEditDSSubmit(title, date, keywords, chapitreIds)}
+          loading={loading}
+        />
+      )}
     </div>
   );
 }

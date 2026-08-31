@@ -71,7 +71,7 @@ export default async function EleveDashboardPage(props: {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Salut, {user.firstName}
+            Bonjour, {user.firstName}
           </h1>
           <p className="text-slate-500 mt-1">Ton espace de cours</p>
         </div>

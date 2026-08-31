@@ -47,8 +47,10 @@ interface StatsResponse {
 export function GroupeStats({ groupeId }: { groupeId: string }) {
   const [data, setData] = useState<StatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedChapterFilter, setSelectedChapterFilter] = useState<string>("GENERAL");
+  const [editingElo, setEditingElo] = useState<{eleveId: string, chapitreId: string, currentVal: number} | null>(null);
 
-  useEffect(() => {
+  const fetchStats = () => {
     fetch(`/api/prof/groupes/${groupeId}/stats`)
       .then(res => res.json())
       .then(d => {
@@ -59,7 +61,26 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
         console.error("Failed to load stats", e);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchStats();
   }, [groupeId]);
+
+  const handleSaveElo = async (eleveId: string, chapitreId: string, newElo: number) => {
+    try {
+      await fetch(`/api/prof/groupes/${groupeId}/stats/elo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eleveId, chapitreId, score: newElo })
+      });
+      setEditingElo(null);
+      fetchStats();
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors de la sauvegarde.");
+    }
+  };
 
   if (loading) {
     return (
@@ -77,10 +98,10 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
     currentLevel: calculateDecayedLevel(l.level, new Date(l.updatedAt))
   }));
 
-  const chapterMap = new Map<string, { title: string; order: number; sum: number; count: number }>();
+  const chapterMap = new Map<string, { id: string; title: string; order: number; sum: number; count: number }>();
   decayedLevels.forEach(l => {
     if (!chapterMap.has(l.chapitre.id)) {
-      chapterMap.set(l.chapitre.id, { title: l.chapitre.title, order: l.chapitre.order, sum: 0, count: 0 });
+      chapterMap.set(l.chapitre.id, { id: l.chapitre.id, title: l.chapitre.title, order: l.chapitre.order, sum: 0, count: 0 });
     }
     const c = chapterMap.get(l.chapitre.id)!;
     c.sum += l.currentLevel;
@@ -174,50 +195,102 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
       </div>
 
       <div className="card p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Détail par élève</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900">Détail par élève</h3>
+          <select 
+            value={selectedChapterFilter}
+            onChange={(e) => setSelectedChapterFilter(e.target.value)}
+            className="text-sm border-slate-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            <option value="GENERAL">Score Global</option>
+            {avgLevelsPerChapter.map(chap => (
+              <option key={chap.id} value={chap.id}>{chap.title}</option>
+            ))}
+          </select>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-slate-600 whitespace-nowrap">
             <thead className="text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 py-3 font-medium">Élève</th>
-                <th className="px-4 py-3 font-medium text-center">Score Global</th>
-                <th className="px-4 py-3 font-medium text-right">Messages</th>
-                {avgLevelsPerChapter.map(chap => (
-                  <th key={chap.title} className="px-4 py-3 font-medium text-center max-w-[120px] truncate" title={chap.title}>
-                    {chap.title}
-                  </th>
-                ))}
+                <th className="px-4 py-3 font-medium text-center">Score ({selectedChapterFilter === "GENERAL" ? "Global" : "Chapitre"})</th>
+                <th className="px-4 py-3 font-medium text-right">Messages échangés</th>
               </tr>
             </thead>
             <tbody>
-              {studentsWithStats.map((student) => (
-                <tr key={student.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-slate-900 sticky left-0 bg-white">
-                    {student.firstName} {student.lastName}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${
-                      student.avgLevel >= 4 ? 'bg-emerald-100 text-emerald-700' : 
-                      student.avgLevel >= 2.5 ? 'bg-indigo-100 text-indigo-700' : 
-                      student.avgLevel > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {student.avgLevel > 0 ? student.avgLevel.toFixed(1) : '-'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {student.totalMsgs}
-                  </td>
-                  {avgLevelsPerChapter.map(chap => {
-                    const studentChapLvl = decayedLevels.find(l => l.eleveId === student.id && l.chapitre.title === chap.title);
-                    const score = studentChapLvl ? studentChapLvl.currentLevel.toFixed(1) : '-';
-                    return (
-                      <td key={chap.title} className="px-4 py-3 text-center text-xs font-medium text-slate-600">
-                        {score}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {studentsWithStats.map((student) => {
+                let scoreToDisplay: number | null = null;
+                let chapLvl: (LevelData & { currentLevel: number }) | undefined = undefined;
+
+                if (selectedChapterFilter === "GENERAL") {
+                  scoreToDisplay = student.avgLevel > 0 ? student.avgLevel : null;
+                } else {
+                  chapLvl = decayedLevels.find(l => l.eleveId === student.id && l.chapitre.id === selectedChapterFilter);
+                  scoreToDisplay = chapLvl ? chapLvl.currentLevel : null;
+                }
+
+                const isEditing = editingElo?.eleveId === student.id && editingElo?.chapitreId === selectedChapterFilter;
+
+                return (
+                  <tr key={student.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-slate-900 bg-white">
+                      {student.firstName} {student.lastName}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        {isEditing ? (
+                          <div className="flex items-center gap-1">
+                            <input 
+                              type="number" 
+                              step="0.1" 
+                              min="1" 
+                              max="5"
+                              value={editingElo.currentVal}
+                              onChange={(e) => setEditingElo({ ...editingElo, currentVal: parseFloat(e.target.value) })}
+                              className="w-16 px-1 py-0.5 text-xs border rounded"
+                            />
+                            <button 
+                              onClick={() => handleSaveElo(student.id, selectedChapterFilter, editingElo.currentVal)}
+                              className="text-emerald-600 hover:bg-emerald-50 px-2 py-0.5 rounded text-xs font-medium"
+                            >
+                              OK
+                            </button>
+                            <button 
+                              onClick={() => setEditingElo(null)}
+                              className="text-slate-400 hover:bg-slate-100 px-2 py-0.5 rounded text-xs font-medium"
+                            >
+                              x
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className={`inline-flex px-2 py-1 rounded-md text-xs font-semibold ${
+                              scoreToDisplay !== null && scoreToDisplay >= 4 ? 'bg-emerald-100 text-emerald-700' : 
+                              scoreToDisplay !== null && scoreToDisplay >= 2.5 ? 'bg-indigo-100 text-indigo-700' : 
+                              scoreToDisplay !== null && scoreToDisplay > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                            }`}>
+                              {scoreToDisplay !== null ? scoreToDisplay.toFixed(1) : '-'}
+                            </span>
+                            
+                            {selectedChapterFilter !== "GENERAL" && (
+                              <button 
+                                onClick={() => setEditingElo({ eleveId: student.id, chapitreId: selectedChapterFilter, currentVal: scoreToDisplay ?? 3.0 })}
+                                className="text-slate-300 hover:text-indigo-600 transition-colors"
+                                title="Modifier manuellement l'Elo"
+                              >
+                                ✎
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {student.totalMsgs}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -35,7 +35,7 @@ export default async function ProfEDTPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Emploi du temps</h1>
-        <p className="text-slate-500 mt-1">Prochains cours — tous groupes confondus</p>
+        <p className="text-slate-500 mt-1">Prochains cours - tous groupes confondus</p>
       </div>
 
       {cours.length === 0 ? (
