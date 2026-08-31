@@ -31,7 +31,18 @@ export default async function ProfDashboardPage() {
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.count({
-      where: { tenantId, role: "ELEVE", isActive: true },
+      where: { 
+        role: "ELEVE", 
+        isActive: true,
+        memberships: {
+          some: {
+            groupe: {
+              profId: tenantId,
+              isArchived: false
+            }
+          }
+        }
+      },
     }),
     prisma.document.count({
       where: {
