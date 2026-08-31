@@ -13,15 +13,24 @@ export async function PATCH(request: Request, context: { params: Promise<{ group
 
   try {
     const body = await request.json();
-    const parsed = z.object({ name: z.string().min(1) }).safeParse(body);
+    const parsed = z.object({ 
+      name: z.string().min(1).optional(),
+      focusConcepts: z.array(z.string()).optional(),
+      availableTags: z.array(z.string()).optional(),
+    }).safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Nom invalide" }, { status: 400 });
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
+
+    const dataToUpdate: any = {};
+    if (parsed.data.name !== undefined) dataToUpdate.name = parsed.data.name;
+    if (parsed.data.focusConcepts !== undefined) dataToUpdate.focusConcepts = parsed.data.focusConcepts;
+    if (parsed.data.availableTags !== undefined) dataToUpdate.availableTags = parsed.data.availableTags;
 
     const groupe = await prisma.groupe.updateMany({
       where: { id: groupeId, profId: user.tenantId },
-      data: { name: parsed.data.name },
+      data: dataToUpdate,
     });
 
     if (groupe.count === 0) {

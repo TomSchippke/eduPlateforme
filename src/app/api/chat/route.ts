@@ -125,10 +125,33 @@ export async function POST(request: Request) {
     // Get or create conversation
     let conversation;
     let groupeName = "lycée/BTS"; // default fallback
+    let focusConcepts: string[] = [];
+    let availableTags: string[] = [];
+    let teacherNote: string | null = null;
+    let passions: string[] = [];
+
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { passions: true } });
+    if (dbUser && dbUser.passions) {
+      passions = dbUser.passions;
+    }
 
     if (groupeId) {
-      const groupe = await prisma.groupe.findUnique({ where: { id: groupeId }, select: { name: true } });
-      if (groupe) groupeName = groupe.name;
+      const groupe = await prisma.groupe.findUnique({ 
+        where: { id: groupeId }, 
+        select: { name: true, focusConcepts: true, availableTags: true } 
+      });
+      if (groupe) {
+        groupeName = groupe.name;
+        focusConcepts = [...groupe.focusConcepts];
+        availableTags = [...groupe.availableTags];
+      }
+
+      const membership = await prisma.groupeMembership.findUnique({
+        where: { eleveId_groupeId: { eleveId: user.id, groupeId } }
+      });
+      if (membership) {
+        teacherNote = membership.teacherNote;
+      }
     }
 
     if (conversationId) {
@@ -178,7 +201,29 @@ export async function POST(request: Request) {
       citations = formatCitations(chunks);
     } else {
       // REVISE mode deterministic selection
-      const validChapters = chapitreIds.length > 0 ? chapitreIds : (await prisma.chapitre.findMany({where: {groupeId}})).map(c => c.id);
+      let dsKeywords: string[] = [];
+      let chapitreIdsToRevise: string[] = [];
+      if (conversation.dateDSId) {
+        const d = await prisma.dateDS.findUnique({
+          where: { id: conversation.dateDSId },
+          include: { chapitres: { include: { chapitre: true } } },
+        });
+        if (d) {
+          chapitreIdsToRevise = d.chapitres.map((c) => c.chapitreId);
+          dsKeywords = d.keywords || [];
+        }
+      } else if (conversation.chapitresReviseIds && Array.isArray(conversation.chapitresReviseIds) && conversation.chapitresReviseIds.length > 0) {
+        chapitreIdsToRevise = conversation.chapitresReviseIds as string[];
+      } else if (groupeId) {
+        const chs = await prisma.chapitre.findMany({ where: { groupeId }, select: { id: true, focusConcepts: true, availableTags: true } });
+        chapitreIdsToRevise = chs.map((c) => c.id);
+      }
+
+      if (chapitreIdsToRevise.length === 0) {
+        return NextResponse.json({ error: "Aucun chapitre sélectionné pour la révision." }, { status: 400 });
+      }
+
+      const validChapters = chapitreIdsToRevise;
       
       if (!conversation.currentChapterId || validChapters.length <= 1) {
         nextChapterId = validChapters[Math.floor(Math.random() * validChapters.length)];
@@ -237,6 +282,15 @@ export async function POST(request: Request) {
       citations = formatCitations(newChunks);
       chunks = newChunks;
 
+      // Si le chapitre est choisi, on fusionne les tags et concepts
+      if (nextChapterId) {
+         const ch = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { focusConcepts: true, availableTags: true } });
+         if (ch) {
+           focusConcepts = Array.from(new Set([...focusConcepts, ...ch.focusConcepts]));
+           availableTags = Array.from(new Set([...availableTags, ...ch.availableTags]));
+         }
+      }
+
       // Fetch level
       const studentLevel = await prisma.studentChapterLevel.findUnique({
         where: { eleveId_chapitreId: { eleveId: user.id, chapitreId: nextChapterId as string } }
@@ -255,7 +309,7 @@ export async function POST(request: Request) {
     // Build prompt
     let systemPrompt: string;
     if (mode === "EXPLIQUE") {
-      systemPrompt = getExpliqueMoiPrompt(context, groupeName);
+      systemPrompt = getExpliqueMoiPrompt(context, groupeName, teacherNote, focusConcepts, availableTags, passions);
     } else {
       systemPrompt = getReviseMoiPrompt(
         context,
@@ -265,7 +319,11 @@ export async function POST(request: Request) {
         nextQuestionSubtype,
         conversation.notionsToReview as string[],
         conversation.consecutiveFails,
-        dsKeywords
+        dsKeywords,
+        teacherNote,
+        focusConcepts,
+        availableTags,
+        passions
       );
     }
 
@@ -285,6 +343,20 @@ export async function POST(request: Request) {
       try {
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
+        
+        // Log mistake if present
+        if (data.correction && data.correction.est_correct === false && data.correction.error_type) {
+          await prisma.studentMistakeLog.create({
+            data: {
+              eleveId: user.id,
+              chapitreId: conversation.currentChapterId,
+              conversationId: conversation.id,
+              errorType: data.correction.error_type,
+              tags: Array.isArray(data.correction.error_tags) ? data.correction.error_tags : [],
+            }
+          });
+        }
+
         if (data.trouve_dans_cours) {
           cleanedResponse = data.explication;
           if (data.exemple_hors_cours) {
@@ -299,6 +371,17 @@ export async function POST(request: Request) {
             cleanedResponse = data.explication;
           }
         }
+        
+        if (data.correction) {
+          const isCorrect = data.correction.est_correct;
+          let correctionText = "";
+          if (isCorrect === true) correctionText = "✅ **Correct !**";
+          else if (isCorrect === false) correctionText = "❌ **Incorrect.**";
+          else correctionText = "💡 **Indication :**";
+          
+          // Prepend the correction to the main explication
+          cleanedResponse = `${correctionText}\n\n${cleanedResponse}`;
+        }
       } catch (e) {
         console.error("Failed to parse EXPLIQUE JSON:", e);
         // cleanedResponse remains the raw response
@@ -308,19 +391,51 @@ export async function POST(request: Request) {
         const jsonMatch = response.match(/\{[\s\S]*\}/);
         const data = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(response);
 
-        let isCorrectAnswer = false;
-        let isPartial = false;
+        let isCorrectAnswer: boolean | null = false;
         
         if (data.correction) {
           isCorrectAnswer = data.correction.est_correct;
-          // You could determine PARTIAL based on difficulte_ajustement or another field, but let's assume it's just CORRECT/INCORRECT for now.
         }
 
-        const evaluation: AnswerEvaluation = isCorrectAnswer ? "CORRECT" : "INCORRECT";
+        let evaluation: AnswerEvaluation;
+        if (isCorrectAnswer === true) {
+          evaluation = "CORRECT";
+        } else if (isCorrectAnswer === false) {
+          evaluation = "INCORRECT";
+        } else {
+          evaluation = "PARTIAL"; // Je ne sais pas / indice
+        }
 
         let newFails = conversation.consecutiveFails;
-        if (evaluation === "CORRECT") newFails = 0;
-        else newFails += 1;
+        if (evaluation === "CORRECT") {
+          newFails = 0;
+        } else if (evaluation === "INCORRECT") {
+          newFails += 1;
+          // Log the mistake if error metadata is present
+          if (data.correction) {
+            if (data.correction.error_type) {
+              await prisma.studentMistakeLog.create({
+                data: {
+                  eleveId: user.id,
+                  chapitreId: conversation.currentChapterId,
+                  conversationId: conversation.id,
+                  errorType: data.correction.error_type,
+                  tags: Array.isArray(data.correction.error_tags) ? data.correction.error_tags : [],
+                }
+              });
+            }
+            if (data.correction.flashcard_a_creer) {
+              await prisma.flashcard.create({
+                data: {
+                  eleveId: user.id,
+                  chapitreId: conversation.currentChapterId,
+                  question: data.correction.flashcard_a_creer.question,
+                  reponse: data.correction.flashcard_a_creer.reponse,
+                }
+              });
+            }
+          }
+        }
 
         const newNotions = [...(conversation.notionsToReview as string[])];
         if (data.notion_a_revoir && !newNotions.includes(data.notion_a_revoir)) {
@@ -370,7 +485,10 @@ export async function POST(request: Request) {
 
         if (data.correction) {
           const isCorrect = data.correction.est_correct;
-          cleanedResponse += isCorrect ? "✅ **Correct !**\n\n" : "❌ **Incorrect.**\n\n";
+          if (isCorrect === true) cleanedResponse += "✅ **Correct !**\n\n";
+          else if (isCorrect === false) cleanedResponse += "❌ **Incorrect.**\n\n";
+          else cleanedResponse += "💡 **Indication :**\n\n";
+          
           cleanedResponse += `${data.correction.explication}\n\n`;
         }
 

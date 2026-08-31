@@ -24,6 +24,7 @@ import {
   MessageCircle,
   Pencil,
   BarChart,
+  Brain,
 } from "lucide-react";
 import Link from "next/link";
 import { GroupeStats } from "./groupe-stats";
@@ -35,22 +36,24 @@ interface GroupeDetailProps {
     name: string;
     schoolYear: string;
     isArchived: boolean;
+    focusConcepts: string[];
+    availableTags: string[];
     chapitres: Array<{
       id: string;
       title: string;
       order: number;
-        documents: Array<{
-          id: string;
-          fileName: string;
-          fileType: string;
-          indexStatus: string;
-          indexError: string | null;
-          fileSize: number | null;
-          visibility: string;
-          docType: string;
-          keywords: string[];
-          createdAt: string;
-        }>;
+      documents: Array<{
+        id: string;
+        fileName: string;
+        fileType: string;
+        indexStatus: string;
+        indexError: string | null;
+        fileSize: number | null;
+        visibility: string;
+        docType: string;
+        keywords: string[];
+        createdAt: string;
+      }>;
     }>;
     memberships: Array<{
       id: string;
@@ -101,13 +104,13 @@ interface GroupeDetailProps {
   }>;
 }
 
-type TabId = "chapitres" | "eleves" | "annonces" | "templates" | "edt" | "ds" | "stats";
+type TabId = "chapitres" | "eleves" | "annonces" | "edt" | "ds" | "stats" | "settings_ai";
 
 export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>("chapitres");
   const [showAddChapitre, setShowAddChapitre] = useState(false);
-  const [showUploadDoc, setShowUploadDoc] = useState<{chapitreId: string, open: boolean}>({chapitreId: "", open: false});
+  const [showUploadDoc, setShowUploadDoc] = useState<{ chapitreId: string, open: boolean }>({ chapitreId: "", open: false });
   const [showAddAnnonce, setShowAddAnnonce] = useState(false);
   const [showAddCours, setShowAddCours] = useState(false);
   const [showAddTemplate, setShowAddTemplate] = useState(false);
@@ -121,11 +124,36 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     { id: "chapitres", label: "Chapitres", icon: BookOpen, count: groupe.chapitres.length },
     { id: "eleves", label: "Élèves", icon: Users, count: groupe.memberships.length },
     { id: "annonces", label: "Annonces", icon: Bell, count: groupe.annonces.length },
-    { id: "templates", label: "EDT Récurrent", icon: RefreshCw, count: groupe.coursTemplates.length },
-    { id: "edt", label: "EDT", icon: Calendar, count: groupe.cours.length },
-    { id: "ds", label: "DS / Évals", icon: ClipboardList, count: groupe.datesDS.length },
+    { id: "edt", label: "EDT", icon: Calendar, count: groupe.cours.length + groupe.coursTemplates.length },
+    { id: "ds", label: "Devoirs Surveillés", icon: ClipboardList, count: groupe.datesDS.length },
     { id: "stats", label: "Statistiques", icon: BarChart },
+    { id: "settings_ai", label: "IA & Pédagogie", icon: Brain },
   ];
+
+  // States for AI Settings
+  const [focusConceptsInput, setFocusConceptsInput] = useState(groupe.focusConcepts.join(", "));
+  const [availableTagsInput, setAvailableTagsInput] = useState(groupe.availableTags.join(", "));
+
+  async function handleSaveAISettings() {
+    setLoading(true);
+    try {
+      const focusConcepts = focusConceptsInput.split(",").map(s => s.trim()).filter(Boolean);
+      const availableTags = availableTagsInput.split(",").map(s => s.trim()).filter(Boolean);
+
+      await fetch(`/api/prof/groupes/${groupe.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ focusConcepts, availableTags }),
+      });
+      router.refresh();
+      alert("Paramètres IA sauvegardés.");
+    } catch (e) {
+      console.error(e);
+      alert("Erreur lors de la sauvegarde.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleAddChapitre(title: string) {
     setLoading(true);
@@ -168,7 +196,7 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     }
   }
 
-  async function handleReorderChapitres(chapitres: {id: string, order: number}[]) {
+  async function handleReorderChapitres(chapitres: { id: string, order: number }[]) {
     setLoading(true);
     try {
       await fetch("/api/prof/chapitres/reorder", {
@@ -227,7 +255,7 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         alert(data.error || "Erreur d'upload");
         return;
       }
-      setShowUploadDoc({chapitreId: "", open: false});
+      setShowUploadDoc({ chapitreId: "", open: false });
       router.refresh();
     } finally {
       setLoading(false);
@@ -345,11 +373,11 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
       await fetch(`/api/prof/dates-ds/${editDS.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          title, 
-          date: new Date(date).toISOString(), 
+        body: JSON.stringify({
+          title,
+          date: new Date(date).toISOString(),
           keywords: keywords.split(",").map(k => k.trim()).filter(Boolean),
-          chapitreIds 
+          chapitreIds
         }),
       });
       setEditDS(null);
@@ -424,18 +452,16 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  isActive
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                }`}
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    isActive ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"
-                  }`}>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"
+                    }`}>
                     {tab.count}
                   </span>
                 )}
@@ -446,6 +472,55 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
       </div>
 
       {/* Tab content */}
+      {activeTab === "settings_ai" && (
+        <div className="space-y-6 max-w-3xl mt-6">
+          <div className="card p-6 border-t-4 border-t-indigo-500">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Paramètres de l'IA & Pédagogie</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Personnalisez le comportement de l'IA pour l'ensemble de ce groupe. Vous pourrez ensuite affiner ces paramètres par élève dans l'onglet Statistiques.
+            </p>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Concepts Clés du Moment
+                </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  Listez les concepts sur lesquels l'IA doit insister (séparés par des virgules). Par ex: <span className="italic">Théorème de l'énergie cinétique, Conversion d'unités, Équations différentielles</span>.
+                </p>
+                <Textarea
+                  value={focusConceptsInput}
+                  onChange={(e) => setFocusConceptsInput(e.target.value)}
+                  placeholder="Énergie, Unités, Méthodologie..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Tags de faiblesses disponibles (Root Cause Analysis)
+                </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  Les tags que l'IA peut attribuer à une erreur d'un élève (séparés par des virgules). Par ex: <span className="italic">unités, erreur de calcul, mauvaise formule, incompréhension cours</span>.
+                </p>
+                <Textarea
+                  value={availableTagsInput}
+                  onChange={(e) => setAvailableTagsInput(e.target.value)}
+                  placeholder="unités, calcul, méthode..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <Button onClick={handleSaveAISettings} loading={loading}>
+                  Enregistrer les paramètres
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === "stats" && (
         <GroupeStats groupeId={groupe.id} />
       )}
@@ -454,7 +529,7 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         <ChapitresTab
           chapitres={groupe.chapitres}
           onAddChapitre={() => setShowAddChapitre(true)}
-          onUploadClick={(chapitreId) => setShowUploadDoc({chapitreId, open: true})}
+          onUploadClick={(chapitreId) => setShowUploadDoc({ chapitreId, open: true })}
           onEditDoc={setEditDoc}
           onDeleteDoc={handleDeleteDoc}
           onDeleteChapitre={handleDeleteChapitre}
@@ -481,28 +556,23 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         />
       )}
 
-      {activeTab === "templates" && (
-        <TemplatesTab
+      {activeTab === "edt" && (
+        <EDTTab
+          cours={groupe.cours}
+          onAddCours={() => setShowAddCours(true)}
           templates={groupe.coursTemplates}
           groupeId={groupe.id}
           onAddTemplate={() => setShowAddTemplate(true)}
         />
       )}
 
-      {activeTab === "edt" && (
-        <EDTTab
-          cours={groupe.cours}
-          onAddCours={() => setShowAddCours(true)}
-        />
-      )}
-
       {activeTab === "ds" && (
-        <DSTab 
-            datesDS={groupe.datesDS} 
-            groupeId={groupe.id} 
-            chapitres={groupe.chapitres} 
-            onEditDS={setEditDS}
-            onDeleteDS={handleDeleteDS}
+        <DSTab
+          datesDS={groupe.datesDS}
+          groupeId={groupe.id}
+          chapitres={groupe.chapitres}
+          onEditDS={setEditDS}
+          onDeleteDS={handleDeleteDS}
         />
       )}
 
@@ -531,20 +601,20 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         onSubmit={handleAddTemplate}
         loading={loading}
       />
-      <UploadDocumentModal 
-        open={showUploadDoc.open} 
-        onClose={() => setShowUploadDoc({chapitreId: "", open: false})}
-        onSubmit={(file, visibility, docType, keywords) => 
+      <UploadDocumentModal
+        open={showUploadDoc.open}
+        onClose={() => setShowUploadDoc({ chapitreId: "", open: false })}
+        onSubmit={(file, visibility, docType, keywords) =>
           handleUploadFile(showUploadDoc.chapitreId, file, visibility, docType, keywords)
         }
         loading={loading}
       />
       {editDoc && (
-        <EditDocumentModal 
+        <EditDocumentModal
           doc={editDoc}
-          open={!!editDoc} 
+          open={!!editDoc}
           onClose={() => setEditDoc(null)}
-          onSubmit={(visibility, docType, keywords) => 
+          onSubmit={(visibility, docType, keywords) =>
             handleUpdateDoc(editDoc.id, visibility, docType, keywords)
           }
           loading={loading}
@@ -599,7 +669,7 @@ function ChapitresTab({
   onDeleteDoc: (docId: string) => void;
   onDeleteChapitre: (chapitreId: string) => void;
   onEditChapitre: (chapitre: any) => void;
-  onReorder: (chapitres: {id: string, order: number}[]) => void;
+  onReorder: (chapitres: { id: string, order: number }[]) => void;
 }) {
   const handleMove = (index: number, direction: "up" | "down") => {
     const newChapitres = [...chapitres].sort((a, b) => a.order - b.order);
@@ -635,14 +705,14 @@ function ChapitresTab({
             <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
                 <div className="flex flex-col gap-1">
-                  <button 
+                  <button
                     disabled={index === 0}
                     onClick={() => handleMove(index, "up")}
                     className="text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-slate-400"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path></svg>
                   </button>
-                  <button 
+                  <button
                     disabled={index === sortedChapitres.length - 1}
                     onClick={() => handleMove(index, "down")}
                     className="text-slate-400 hover:text-blue-600 disabled:opacity-30 disabled:hover:text-slate-400"
@@ -877,7 +947,7 @@ function TemplatesTab({
   onAddTemplate: () => void;
 }) {
   const router = useRouter();
-  
+
   const days = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
   async function handleDelete(id: string) {
@@ -927,11 +997,18 @@ function TemplatesTab({
 function EDTTab({
   cours,
   onAddCours,
+  templates,
+  groupeId,
+  onAddTemplate,
 }: {
   cours: GroupeDetailProps["groupe"]["cours"];
   onAddCours: () => void;
+  templates: GroupeDetailProps["groupe"]["coursTemplates"];
+  groupeId: string;
+  onAddTemplate: () => void;
 }) {
   const router = useRouter();
+  const [subTab, setSubTab] = useState<"ponctuel" | "recurrent">("ponctuel");
 
   async function toggleStatus(coursId: string, updates: any) {
     await fetch(`/api/prof/cours/${coursId}`, {
@@ -943,66 +1020,93 @@ function EDTTab({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-slate-500">
-          Les cours récurrents sont générés automatiquement.
-        </p>
-        <Button onClick={onAddCours} size="sm">
-          <Plus className="h-4 w-4" />
-          Ajouter cours ponctuel
-        </Button>
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center gap-4 border-b border-slate-200 pb-2">
+        <button 
+          onClick={() => setSubTab("ponctuel")}
+          className={`pb-2 border-b-2 font-medium text-sm transition-colors ${subTab === "ponctuel" ? "border-indigo-500 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+        >
+          Voir l'EDT
+        </button>
+        <button 
+          onClick={() => setSubTab("recurrent")}
+          className={`pb-2 border-b-2 font-medium text-sm transition-colors ${subTab === "recurrent" ? "border-indigo-500 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+        >
+          EDT Récurrent
+        </button>
       </div>
 
-      {cours.length === 0 ? (
-        <div className="text-center py-12">
-          <Calendar className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Aucun cours planifié</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {cours.map((c) => (
-            <div key={c.id} className={`card p-4 flex items-center gap-4 ${c.isCancelled ? 'opacity-50' : ''}`}>
-              <div className="w-14 h-14 rounded-lg bg-blue-100 flex flex-col items-center justify-center shrink-0">
-                <span className="text-xs text-blue-600 font-medium">
-                  {new Date(c.dateTime).toLocaleDateString("fr-FR", { weekday: "short" })}
-                </span>
-                <span className="text-xl font-bold text-blue-700">
-                  {new Date(c.dateTime).getDate()}
-                </span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className={`font-medium ${c.isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}`}>
-                    {c.title}
-                  </p>
-                  {c.isDS && <Badge variant="info">DS</Badge>}
-                  {c.isCancelled && <Badge variant="danger">Annulé</Badge>}
-                  {c.isException && !c.isCancelled && <Badge variant="warning">Modifié</Badge>}
-                </div>
-                <p className="text-sm text-slate-500">
-                  {new Date(c.dateTime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                  {c.endTime && ` - ${new Date(c.endTime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`}
-                  {c.room ? ` · Salle ${c.room}` : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => toggleStatus(c.id, { isDS: !c.isDS })}
-                  className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 transition-colors"
-                >
-                  {c.isDS ? "- DS" : "+ DS"}
-                </button>
-                <button
-                  onClick={() => toggleStatus(c.id, { isCancelled: !c.isCancelled })}
-                  className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-red-600 transition-colors"
-                >
-                  {c.isCancelled ? "Rétablir" : "Annuler"}
-                </button>
-              </div>
+      {subTab === "ponctuel" && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-slate-500">
+              Les cours récurrents sont générés automatiquement.
+            </p>
+            <Button onClick={onAddCours} size="sm">
+              <Plus className="h-4 w-4" />
+              Ajouter cours ponctuel
+            </Button>
+          </div>
+
+          {cours.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500">Aucun cours planifié</p>
             </div>
-          ))}
+          ) : (
+            <div className="space-y-3">
+              {cours.map((c) => (
+                <div key={c.id} className={`card p-4 flex items-center gap-4 ${c.isCancelled ? 'opacity-50' : ''}`}>
+                  <div className="w-14 h-14 rounded-lg bg-blue-100 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-xs text-blue-600 font-medium">
+                      {new Date(c.dateTime).toLocaleDateString("fr-FR", { weekday: "short" })}
+                    </span>
+                    <span className="text-xl font-bold text-blue-700">
+                      {new Date(c.dateTime).getDate()}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className={`font-medium ${c.isCancelled ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                        {c.title}
+                      </p>
+                      {c.isDS && <Badge variant="info">DS</Badge>}
+                      {c.isCancelled && <Badge variant="danger">Annulé</Badge>}
+                      {c.isException && !c.isCancelled && <Badge variant="warning">Modifié</Badge>}
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      {new Date(c.dateTime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      {c.endTime && ` - ${new Date(c.endTime).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`}
+                      {c.room ? ` · Salle ${c.room}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleStatus(c.id, { isDS: !c.isDS })}
+                      className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 transition-colors"
+                    >
+                      {c.isDS ? "- DS" : "+ DS"}
+                    </button>
+                    <button
+                      onClick={() => toggleStatus(c.id, { isCancelled: !c.isCancelled })}
+                      className="text-xs px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-red-600 transition-colors"
+                    >
+                      {c.isCancelled ? "Rétablir" : "Annuler"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      )}
+
+      {subTab === "recurrent" && (
+        <TemplatesTab 
+          templates={templates} 
+          groupeId={groupeId} 
+          onAddTemplate={onAddTemplate} 
+        />
       )}
     </div>
   );
@@ -1268,8 +1372,8 @@ function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
 
   return (
     <Modal open={open} onClose={onClose} title="Ajouter un document" size="lg">
-      <form onSubmit={(e) => { 
-        e.preventDefault(); 
+      <form onSubmit={(e) => {
+        e.preventDefault();
         if (file) {
           onSubmit(file, visibility, docType, keywords);
           setFile(null);
@@ -1278,15 +1382,15 @@ function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
       }} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Fichier</label>
-          <input 
-            type="file" 
-            required 
+          <input
+            type="file"
+            required
             accept=".pdf,.docx,.txt,.md"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Visibilité</label>
@@ -1306,11 +1410,11 @@ function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
           </div>
         </div>
 
-        <Input 
-          label="Mots-clés (séparés par des virgules)" 
-          value={keywords} 
+        <Input
+          label="Mots-clés (séparés par des virgules)"
+          value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
-          placeholder="ex: macro-économie, PIB" 
+          placeholder="ex: macro-économie, PIB"
         />
 
         <div className="flex justify-end gap-3 pt-2">
@@ -1333,11 +1437,11 @@ function EditDocumentModal({ doc, open, onClose, onSubmit, loading }: {
 
   return (
     <Modal open={open} onClose={onClose} title="Modifier le document" size="lg">
-      <form onSubmit={(e) => { 
-        e.preventDefault(); 
+      <form onSubmit={(e) => {
+        e.preventDefault();
         onSubmit(visibility, docType, keywords);
       }} className="space-y-4">
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Visibilité</label>
@@ -1357,9 +1461,9 @@ function EditDocumentModal({ doc, open, onClose, onSubmit, loading }: {
           </div>
         </div>
 
-        <Input 
-          label="Mots-clés (séparés par des virgules)" 
-          value={keywords} 
+        <Input
+          label="Mots-clés (séparés par des virgules)"
+          value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
         />
 
@@ -1382,8 +1486,8 @@ function EditDSModal({ ds, chapitres, open, onClose, onSubmit, loading }: {
 
   return (
     <Modal open={open} onClose={onClose} title="Modifier le DS" size="lg">
-      <form onSubmit={(e) => { 
-        e.preventDefault(); 
+      <form onSubmit={(e) => {
+        e.preventDefault();
         onSubmit(title, date, keywords, selectedChapitres);
       }} className="space-y-4">
         <Input label="Titre" value={title} onChange={(e) => setTitle(e.target.value)} required />

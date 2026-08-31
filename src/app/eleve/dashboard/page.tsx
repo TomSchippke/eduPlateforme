@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Clock,
   Sparkles,
+  Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -50,6 +51,15 @@ export default async function EleveDashboardPage(props: {
             where: { date: { gte: new Date() } },
             orderBy: { date: "asc" },
             take: 2,
+            include: {
+              chapitres: {
+                include: {
+                  chapitre: {
+                    select: { id: true, title: true }
+                  }
+                }
+              }
+            }
           },
         },
       },
@@ -75,13 +85,21 @@ export default async function EleveDashboardPage(props: {
           </h1>
           <p className="text-slate-500 mt-1">Ton espace de cours</p>
         </div>
-        <Link href="/eleve/chat">
-          <Button className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">Learn with IA</span>
-            <span className="sm:hidden">IA</span>
-          </Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/eleve/flashcards">
+            <Button variant="outline" className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">Mes Flashcards</span>
+            </Button>
+          </Link>
+          <Link href="/eleve/chat">
+            <Button className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden sm:inline">Learn with IA</span>
+              <span className="sm:hidden">IA</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Group selector (if multiple) */}
@@ -186,18 +204,30 @@ export default async function EleveDashboardPage(props: {
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {currentGroupe.datesDS.map((ds) => (
-                  <div key={ds.id} className="p-4 rounded-lg bg-red-50 border border-red-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <p className="font-semibold text-red-900">{ds.title}</p>
-                      <Badge variant="danger">{formatDateTime(ds.date).split(",")[0]}</Badge>
-                    </div>
-                    {ds.keywords && ds.keywords.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {ds.keywords.map((kw) => (
-                          <Badge key={kw} variant="outline" size="sm">{kw}</Badge>
-                        ))}
+                  <div key={ds.id} className="p-4 rounded-lg bg-red-50 border border-red-200 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="font-semibold text-red-900">{ds.title}</p>
+                        <Badge variant="danger">{formatDateTime(ds.date).split(",")[0]}</Badge>
                       </div>
-                    )}
+                      {ds.keywords && ds.keywords.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {ds.keywords.map((kw) => (
+                            <Badge key={kw} variant="outline" size="sm">{kw}</Badge>
+                          ))}
+                        </div>
+                      )}
+                      {ds.chapitres && ds.chapitres.length > 0 && (
+                        <div className="mt-2 text-sm text-red-800">
+                          <span className="font-medium underline decoration-red-300 underline-offset-2">Programme :</span>
+                          <ul className="list-disc list-inside mt-1 space-y-0.5">
+                            {ds.chapitres.map(c => (
+                              <li key={c.chapitre.id} className="text-red-700 truncate">{c.chapitre.title}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

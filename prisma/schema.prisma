@@ -56,6 +56,7 @@ model User {
   defaultQuota Int      @default(10) @map("default_quota")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+  passions     String[] @default([])
 
   groupesOwned         Groupe[]              @relation("ProfGroupes")
   memberships          GroupeMembership[]
@@ -63,6 +64,8 @@ model User {
   quotas               QuotaChat[]
   schoolHolidays       SchoolHoliday[]
   studentChapterLevels StudentChapterLevel[]
+  studentMistakeLogs   StudentMistakeLog[]
+  flashcards           Flashcard[]
 
   @@index([tenantId])
   @@index([role])
@@ -87,15 +90,19 @@ model Groupe {
   datesDS        DateDS[]
   conversations  Conversation[]
 
+  focusConcepts String[] @default([])
+  availableTags String[] @default(["Unité", "Cours", "Calcul", "Lecture d'énoncé"])
+
   @@index([profId])
   @@map("groupes")
 }
 
 model GroupeMembership {
-  id       String   @id @default(cuid())
-  eleveId  String   @map("eleve_id")
-  groupeId String   @map("groupe_id")
-  joinedAt DateTime @default(now()) @map("joined_at")
+  id          String   @id @default(cuid())
+  eleveId     String   @map("eleve_id")
+  groupeId    String   @map("groupe_id")
+  teacherNote String?  @map("teacher_note")
+  joinedAt    DateTime @default(now()) @map("joined_at")
 
   eleve  User   @relation(fields: [eleveId], references: [id], onDelete: Cascade)
   groupe Groupe @relation(fields: [groupeId], references: [id], onDelete: Cascade)
@@ -117,6 +124,11 @@ model Chapitre {
   annonces             Annonce[]
   datesDS              DateDSChapitre[]
   studentChapterLevels StudentChapterLevel[]
+  studentMistakes      StudentMistakeLog[]
+  flashcards           Flashcard[]
+
+  focusConcepts String[] @default([])
+  availableTags String[] @default([])
 
   @@index([groupeId])
   @@map("chapitres")
@@ -259,9 +271,9 @@ model DateDS {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  groupe        Groupe           @relation(fields: [groupeId], references: [id], onDelete: Cascade)
-  chapitres     DateDSChapitre[]
-  conversations Conversation[]
+  groupe         Groupe           @relation(fields: [groupeId], references: [id], onDelete: Cascade)
+  chapitres      DateDSChapitre[]
+  conversations  Conversation[]
 
   @@index([groupeId])
   @@map("dates_ds")
@@ -303,10 +315,11 @@ model Conversation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  eleve    User      @relation(fields: [eleveId], references: [id], onDelete: Cascade)
-  groupe   Groupe    @relation(fields: [groupeId], references: [id], onDelete: Cascade)
-  dateDS   DateDS?   @relation(fields: [dateDSId], references: [id], onDelete: SetNull)
-  messages Message[]
+  eleve              User                @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  groupe             Groupe              @relation(fields: [groupeId], references: [id], onDelete: Cascade)
+  dateDS             DateDS?             @relation(fields: [dateDSId], references: [id], onDelete: SetNull)
+  messages           Message[]
+  studentMistakeLogs StudentMistakeLog[]
 
   @@index([eleveId])
   @@index([groupeId])
@@ -341,3 +354,38 @@ model QuotaChat {
   @@index([eleveId])
   @@map("quota_chats")
 }
+
+model StudentMistakeLog {
+  id             String   @id @default(cuid())
+  eleveId        String   @map("eleve_id")
+  chapitreId     String?  @map("chapitre_id")
+  conversationId String   @map("conversation_id")
+  errorType      String   @map("error_type")
+  tags           String[] @default([])
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  eleve        User         @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  chapitre     Chapitre?    @relation(fields: [chapitreId], references: [id], onDelete: SetNull)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([eleveId])
+  @@index([chapitreId])
+  @@map("student_mistake_logs")
+}
+
+model Flashcard {
+  id         String   @id @default(cuid())
+  eleveId    String   @map("eleve_id")
+  chapitreId String?  @map("chapitre_id")
+  question   String
+  reponse    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  eleve      User       @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  chapitre   Chapitre?  @relation(fields: [chapitreId], references: [id], onDelete: SetNull)
+
+  @@index([eleveId])
+  @@index([chapitreId])
+  @@map("flashcards")
+}
+

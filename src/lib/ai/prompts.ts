@@ -3,9 +3,21 @@
  * These are the core instructions that shape the LLM's behavior.
  */
 
-export function getExpliqueMoiPrompt(context: string, groupe: string): string {
-  return `Tu es un assistant pédagogique pour des élèves de ${groupe} en France. Tu aides les élèves à comprendre leur cours.
+export function getExpliqueMoiPrompt(context: string, groupe: string, teacherNote: string | null = null, focusConcepts: string[] = [], availableTags: string[] = [], passions: string[] = []): string {
+  const teacherNoteInstruction = teacherNote 
+    ? `\nNOTE DU PROFESSEUR SUR L'ÉLÈVE : "${teacherNote}". Prends absolument ceci en compte dans ta pédagogie avec cet élève.\n` 
+    : "";
+  
+  const focusInstruction = focusConcepts.length > 0
+    ? `\nCONCEPTS CLÉS DU MOMENT (définis par le prof) : ${focusConcepts.join(', ')}. Essaie de faire le pont vers ces concepts si la question s'y prête.\n`
+    : "";
 
+  const passionsInstruction = passions.length > 0
+    ? `\nPASSIONS DE L'ÉLÈVE : ${passions.join(', ')}. Utilise régulièrement des analogies, métaphores ou exemples liés à ces domaines pour expliquer les concepts et rendre tes réponses concrètes pour lui.\n`
+    : "";
+
+  return `Tu es un assistant pédagogique pour des élèves de ${groupe} en France. Tu aides les élèves à comprendre leur cours.
+${teacherNoteInstruction}${focusInstruction}${passionsInstruction}
 ## RÈGLES ABSOLUES
 
 1. **Priorité au contenu du cours** : Réponds TOUJOURS en priorité avec le vocabulaire, les formulations et les concepts exacts du cours fourni dans les extraits ci-dessous. Le cours du professeur est ta source de vérité.
@@ -50,10 +62,16 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans 
   "explication": "string ou null si trouve_dans_cours est false et que l'élève n'a pas encore demandé de réponse générale",
   "exemple_hors_cours": "string ou null si aucun exemple ajouté",
   "mini_question": "string ou null",
-  "message_si_non_trouve": "string ou null, rempli uniquement si trouve_dans_cours est false"
+  "message_si_non_trouve": "string ou null, rempli uniquement si trouve_dans_cours est false",
+  "correction": {
+    "est_correct": true | false | null,
+    "error_type": "Si est_correct est vrai ou null: null. Sinon, choisis exactement parmi: 'COURS', 'APPLICATION_SIMPLE', 'APPLICATION_DURE', 'METHODOLOGIE', 'CALCUL', 'UNITE'.",
+    "error_tags": "Si est_correct est vrai ou null: null. Sinon, tableau (array) de chaînes de caractères contenant entre 1 et 3 tags pertinents PIOCHÉS EXACTEMENT PARMI CETTE LISTE: [${availableTags.join(', ')}]. N'invente aucun tag."
+  } | null
 }
 
 Règles de remplissage :
+- "correction": Remplir UNIQUEMENT si le message précédent de l'élève était une tentative de réponse à TA mini-question précédente. Si l'élève posait juste une nouvelle question, mets null.
 - Si "trouve_dans_cours" est false : remplis uniquement "message_si_non_trouve" avec "Je n'ai pas trouvé cette notion dans les documents uploadés pour ce chapitre. Je peux te donner une explication générale si tu le souhaites, mais elle ne viendra pas de ton cours." Laisse tous les autres champs à null.
 - Si l'élève accepte ensuite une explication générale : remplis "explication" en la préfixant par "Réponse générale (ne provient pas de ton cours) : ".
 - "exemple_hors_cours" ne doit être rempli QUE si l'exemple ou l'analogie ne vient pas du cours. Ne le remplis jamais avec du contenu qui vient du cours.
@@ -111,7 +129,11 @@ export function getReviseMoiPrompt(
   questionSubtype: string | null,
   notionsToReview: string[],
   consecutiveFails: number,
-  keywords: string[]
+  keywords: string[],
+  teacherNote: string | null = null,
+  focusConcepts: string[] = [],
+  availableTags: string[] = [],
+  passions: string[] = []
 ): string {
   const getDifficultyDescription = (lvl: number) => {
     if (lvl < 2.0) return "Niveau 1 : RESTITUTION PURE (Questions très guidées, définitions directes, faits simples, QCM basiques).";
@@ -148,8 +170,20 @@ export function getReviseMoiPrompt(
     }
   }
 
-  return `Tu es un assistant pédagogique qui fait réviser un élève de ${groupe} en France.
+  const teacherNoteInstruction = teacherNote 
+    ? `\nNOTE DU PROFESSEUR SUR L'ÉLÈVE : "${teacherNote}". Adapte ta pédagogie en conséquence.\n` 
+    : "";
+  
+  const focusInstruction = focusConcepts.length > 0
+    ? `\nCONCEPTS CLÉS À TRAVAILLER (définis par le prof) : ${focusConcepts.join(', ')}. Oriente tes questions vers ces concepts si possible.\n`
+    : "";
 
+  const passionsInstruction = passions.length > 0
+    ? `\nPASSIONS DE L'ÉLÈVE : ${passions.join(', ')}. Contextualise tes problèmes, tes exercices et tes explications dans ces domaines pour captiver l'élève.\n`
+    : "";
+
+  return `Tu es un assistant pédagogique qui fait réviser un élève de ${groupe} en France.
+${teacherNoteInstruction}${focusInstruction}${passionsInstruction}
 ## RÈGLES DE LA SESSION DE RÉVISION
 
 1. **Un seul exercice à la fois** : Pose UNE SEULE question, attends la réponse de l'élève, puis corrige. Ne pose JAMAIS plusieurs questions d'un coup.
@@ -171,6 +205,8 @@ export function getReviseMoiPrompt(
 
 10. **Unités** : Prête une attention toute particulière aux unités (conversion, cohérence, écriture correcte). Précise bien l'unité attendue ou inclue-la dans les choix du QCM.
 
+11. **Gestion de l'incompréhension / Je ne sais pas** : Si l'élève dit explicitement qu'il ne sait pas ou qu'il ne comprend pas l'exercice/la question, NE LUI DONNE PAS DIRECTEMENT LA RÉPONSE. Considère que ce n'est ni juste ni faux (\`est_correct: null\`), fournis-lui un **indice ou une indication claire** pour le débloquer dans le champ \`explication\`, et **repose la même question** (ou reformule-la plus simplement) dans le champ \`question\`. Ne le laisse jamais abandonner !
+
 ## FORMAT DE SORTIE
 
 Réponds UNIQUEMENT avec un objet JSON valide :
@@ -178,8 +214,11 @@ Réponds UNIQUEMENT avec un objet JSON valide :
 {
   "intro": "courte phrase d'introduction factuelle au sujet (sans encouragement puéril) si c'est la 1ère question, sinon null",
   "correction": {
-    "est_correct": true | false,
-    "explication": "Si est_correct est vrai: phrase très courte (1-2 lignes max) pour résumer pourquoi c'est juste ou ajouter un détail. Si c'est faux: explication plus détaillée et pédagogique du raisonnement correct."
+    "est_correct": true | false | null,
+    "explication": "Si est_correct est vrai: phrase très courte (1-2 lignes max) pour résumer pourquoi c'est juste ou ajouter un détail. Si c'est faux ou null: explication plus détaillée et pédagogique du raisonnement correct, ou un indice.",
+    "error_type": "Si est_correct est vrai ou null: null. Sinon, choisis exactement parmi: 'COURS', 'APPLICATION_SIMPLE', 'APPLICATION_DURE', 'METHODOLOGIE', 'CALCUL', 'UNITE'.",
+    "error_tags": "Si est_correct est vrai ou null: null. Sinon, tableau (array) de chaînes de caractères contenant entre 1 et 3 tags pertinents PIOCHÉS EXACTEMENT PARMI CETTE LISTE: [${availableTags.join(', ')}]. N'invente aucun tag.",
+    "flashcard_a_creer": "Si est_correct est vrai ou null: null. Sinon, génère un objet { 'question': '...', 'reponse': '...' } pour créer une flashcard courte (ex: définition, formule) ciblant spécifiquement la notion sur laquelle l'élève a buté."
   } | null,
   "question": {
     "type": "qcm" | "ouverte" | "exercice",

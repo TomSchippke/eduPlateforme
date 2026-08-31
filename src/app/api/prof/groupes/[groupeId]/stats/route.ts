@@ -74,10 +74,27 @@ export async function GET(
       }
     });
 
+    // Get mistake logs
+    const mistakes = await prisma.studentMistakeLog.findMany({
+      where: {
+        eleveId: { in: studentIds },
+        chapitre: { groupeId }
+      },
+      select: {
+        id: true,
+        eleveId: true,
+        chapitreId: true,
+        errorType: true,
+        tags: true,
+        createdAt: true
+      }
+    });
+
     return NextResponse.json({
       levels,
       conversations,
-      students: memberships.map(m => m.eleve)
+      students: memberships.map(m => ({ ...m.eleve, teacherNote: m.teacherNote })),
+      mistakes
     });
   } catch (error) {
     console.error("Error fetching stats:", error);

@@ -12,6 +12,7 @@ import {
   LogOut,
   GraduationCap,
   Bell,
+  User,
 } from "lucide-react";
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/eleve/edt", label: "EDT", icon: Calendar },
   { href: "/eleve/annonces", label: "Annonces", icon: Bell },
   { href: "/eleve/chat", label: "IA", icon: MessageCircle },
+  { href: "/eleve/compte", label: "Compte", icon: User },
 ];
 
 interface EleveHeaderProps {
