@@ -91,9 +91,19 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
     .map(c => ({ ...c, avg: c.sum / c.count }))
     .sort((a, b) => a.order - b.order);
 
-  // Use of the app
+  // Use of the app (30 days total)
   const msgCountExplique = data.conversations.filter(c => c.mode === 'EXPLIQUE').reduce((acc, c) => acc + c._count.messages, 0);
   const msgCountRevise = data.conversations.filter(c => c.mode === 'REVISE').reduce((acc, c) => acc + c._count.messages, 0);
+
+  // Use of the app (last 7 days - hebdomadaire)
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const msgCountExpliqueHebdo = data.conversations
+    .filter(c => c.mode === 'EXPLIQUE' && new Date(c.createdAt) >= sevenDaysAgo)
+    .reduce((acc, c) => acc + c._count.messages, 0);
+  const msgCountReviseHebdo = data.conversations
+    .filter(c => c.mode === 'REVISE' && new Date(c.createdAt) >= sevenDaysAgo)
+    .reduce((acc, c) => acc + c._count.messages, 0);
 
   // Student list with individual averages
   const studentsWithStats = data.students.map(s => {
@@ -121,7 +131,8 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
             <BookOpen className="h-5 w-5 text-blue-500" />
             <h3 className="font-medium text-slate-700">Mode Explication</h3>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{msgCountExplique} <span className="text-sm font-normal text-slate-500">messages</span></p>
+          <p className="text-3xl font-bold text-slate-900">{msgCountExpliqueHebdo} <span className="text-sm font-normal text-slate-500">messages (7j)</span></p>
+          <p className="text-sm text-slate-400 mt-1">{msgCountExplique} messages au total (30j)</p>
         </div>
 
         <div className="card p-5 border-t-4 border-t-emerald-500">
@@ -129,7 +140,8 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
             <Brain className="h-5 w-5 text-emerald-500" />
             <h3 className="font-medium text-slate-700">Mode Révision</h3>
           </div>
-          <p className="text-3xl font-bold text-slate-900">{msgCountRevise} <span className="text-sm font-normal text-slate-500">messages</span></p>
+          <p className="text-3xl font-bold text-slate-900">{msgCountReviseHebdo} <span className="text-sm font-normal text-slate-500">messages (7j)</span></p>
+          <p className="text-sm text-slate-400 mt-1">{msgCountRevise} messages au total (30j)</p>
         </div>
       </div>
 
@@ -164,18 +176,23 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
       <div className="card p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4">Détail par élève</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-slate-600">
+          <table className="w-full text-sm text-left text-slate-600 whitespace-nowrap">
             <thead className="text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 py-3 font-medium">Élève</th>
-                <th className="px-4 py-3 font-medium text-center">Score Global (Elo)</th>
-                <th className="px-4 py-3 font-medium text-right">Messages échangés</th>
+                <th className="px-4 py-3 font-medium text-center">Score Global</th>
+                <th className="px-4 py-3 font-medium text-right">Messages</th>
+                {avgLevelsPerChapter.map(chap => (
+                  <th key={chap.title} className="px-4 py-3 font-medium text-center max-w-[120px] truncate" title={chap.title}>
+                    {chap.title}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {studentsWithStats.map((student) => (
                 <tr key={student.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                  <td className="px-4 py-3 font-medium text-slate-900 sticky left-0 bg-white">
                     {student.firstName} {student.lastName}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -190,6 +207,15 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
                   <td className="px-4 py-3 text-right">
                     {student.totalMsgs}
                   </td>
+                  {avgLevelsPerChapter.map(chap => {
+                    const studentChapLvl = decayedLevels.find(l => l.eleveId === student.id && l.chapitre.title === chap.title);
+                    const score = studentChapLvl ? studentChapLvl.currentLevel.toFixed(1) : '-';
+                    return (
+                      <td key={chap.title} className="px-4 py-3 text-center text-xs font-medium text-slate-600">
+                        {score}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

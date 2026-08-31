@@ -61,6 +61,7 @@ interface ChatMessage {
     section?: string;
     excerpt: string;
   }>;
+  chapterName?: string;
   createdAt?: string | Date;
 }
 
@@ -177,6 +178,7 @@ export function ChatInterface({
         role: "assistant",
         content: data.content,
         sourceCitations: data.citations,
+        chapterName: data.chapterName,
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, finalResponse]);
@@ -514,9 +516,10 @@ export function ChatInterface({
               <div className="prose prose-sm prose-slate max-w-none break-words whitespace-pre-wrap">
                 <FormattedMessage content={message.content} />
               </div>
-              {message.createdAt && (
-                <div className={`text-[10px] mt-1 text-right ${message.role === "user" ? "text-indigo-200" : "text-slate-400"}`}>
-                  {new Date(message.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+              {(message.createdAt || message.chapterName) && (
+                <div className={`flex justify-between items-center text-[10px] mt-2 pt-2 border-t ${message.role === "user" ? "border-indigo-400/30 text-indigo-200" : "border-slate-100 text-slate-400"}`}>
+                  <span>{message.chapterName ? `Chapitre : ${message.chapterName}` : ""}</span>
+                  <span>{message.createdAt ? new Date(message.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                 </div>
               )}
             </div>

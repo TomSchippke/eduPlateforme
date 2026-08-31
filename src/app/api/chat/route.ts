@@ -184,7 +184,7 @@ export async function POST(request: Request) {
         nextChapterId = validChapters[Math.floor(Math.random() * validChapters.length)];
         chapterStreak = 1;
       } else {
-        const pStay = Math.max(0, 1 - (conversation.chapterStreak / 4));
+        const pStay = conversation.chapterStreak < 2 ? 1 : Math.max(0, 1 - (conversation.chapterStreak / 4));
         if (Math.random() < pStay && validChapters.includes(conversation.currentChapterId)) {
           nextChapterId = conversation.currentChapterId;
           chapterStreak = conversation.chapterStreak + 1;
@@ -379,7 +379,8 @@ export async function POST(request: Request) {
           if (data.question.choix && Array.isArray(data.question.choix)) {
             const labels = ["A", "B", "C", "D"];
             data.question.choix.forEach((choix: string, i: number) => {
-              cleanedResponse += `${labels[i] || "•"}) ${choix}\n`;
+              const cleanChoix = choix.replace(/^[A-Da-d]\)\s*/, "").replace(/^[A-Da-d]\.\s*/, "").trim();
+              cleanedResponse += `${labels[i] || "•"}) ${cleanChoix}\n`;
             });
           }
         }
@@ -391,10 +392,22 @@ export async function POST(request: Request) {
           cleanedResponse += `- Notions à revoir : ${data.resume_session.notions_a_revoir.join(", ")}\n\n`;
           cleanedResponse += `💡 **Conseil** : ${data.resume_session.conseil}`;
         }
+        
+        let chapterTitle = null;
+        if (nextChapterId) {
+          const chapInfo = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { title: true }});
+          if (chapInfo) chapterTitle = chapInfo.title;
+        }
       } catch (e) {
         console.error("Failed to parse REVISE JSON:", e);
         // Fallback to raw response
       }
+    }
+
+    let finalChapterTitle = null;
+    if (nextChapterId) {
+      const chapInfo = await prisma.chapitre.findUnique({ where: { id: nextChapterId }, select: { title: true }});
+      if (chapInfo) finalChapterTitle = chapInfo.title;
     }
 
     // Save messages
@@ -418,6 +431,7 @@ export async function POST(request: Request) {
       content: cleanedResponse,
       citations: citations.length > 0 ? citations : undefined,
       conversationId: conversation.id,
+      chapterName: finalChapterTitle,
     });
   } catch (error) {
     console.error("Chat API error:", error);

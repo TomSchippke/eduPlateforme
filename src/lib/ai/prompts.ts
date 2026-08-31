@@ -168,6 +168,8 @@ export function getReviseMoiPrompt(
 
 8. **Ton et style** : Le ton doit être direct, professoral et factuel. N'utilise JAMAIS de messages d'encouragements enfantins ou familiers (pas de "Tu vas y arriver", "Super", "Bravo", "Tu gères").
 
+9. **Notations** : Dans les énoncés, explicite toujours les notations potentiellement ambiguës (ex: nom spécifique d'une force ou d'une constante peu connue), mais NE RÉ-EXPLICITE PAS les grandeurs de base évidentes (comme U pour la tension, I pour l'intensité, W pour le travail).
+
 ## FORMAT DE SORTIE
 
 Réponds UNIQUEMENT avec un objet JSON valide :
@@ -181,7 +183,7 @@ Réponds UNIQUEMENT avec un objet JSON valide :
   "question": {
     "type": "qcm" | "ouverte" | "exercice",
     "enonce": "string contenant l'énoncé ou la question",
-    "choix": ["A", "B", "C", "D"] | null
+    "choix": ["texte du choix 1", "texte du choix 2"] | null (NE JAMAIS préfixer par A), B), etc. Juste le texte)
   } | null,
   "notion_a_revoir": "nom de la notion si l'élève a eu tout faux, sinon null",
   "resume_session": null
