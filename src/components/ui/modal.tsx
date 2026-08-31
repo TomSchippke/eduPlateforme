@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -15,6 +16,11 @@ interface ModalProps {
 
 export function Modal({ open, onClose, title, children, className, size = "md" }: ModalProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -30,7 +36,7 @@ export function Modal({ open, onClose, title, children, className, size = "md" }
     };
   }, [open]);
 
-  if (!isVisible && !open) return null;
+  if (!mounted || (!isVisible && !open)) return null;
 
   const sizes = {
     sm: "max-w-md",
@@ -38,8 +44,8 @@ export function Modal({ open, onClose, title, children, className, size = "md" }
     lg: "max-w-2xl",
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className={cn(
@@ -76,4 +82,6 @@ export function Modal({ open, onClose, title, children, className, size = "md" }
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
