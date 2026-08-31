@@ -7,11 +7,18 @@ export interface StorageProvider {
 
 import { LocalStorage } from "./local";
 import { S3Storage } from "./s3";
+import { VercelBlobStorage } from "./vercel_blob";
 
 export function getStorage(): StorageProvider {
   const provider = process.env.STORAGE_PROVIDER || "local";
+  
+  if (provider === "vercel_blob") {
+    return new VercelBlobStorage();
+  }
+  
   if (provider === "s3") {
     return new S3Storage();
   }
+  
   return new LocalStorage();
 }
