@@ -131,8 +131,16 @@ export async function POST(request: Request) {
     let passions: string[] = [];
 
     const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { passions: true } });
-    if (dbUser && dbUser.passions) {
-      passions = dbUser.passions;
+    if (dbUser && dbUser.passions && dbUser.passions.length > 0) {
+      if (mode === "REVISE") {
+        // Une chance sur deux d'utiliser une passion, sinon on laisse général
+        if (Math.random() < 0.5) {
+          const randomPassion = dbUser.passions[Math.floor(Math.random() * dbUser.passions.length)];
+          passions = [randomPassion];
+        }
+      } else {
+        passions = dbUser.passions;
+      }
     }
 
     if (groupeId) {
