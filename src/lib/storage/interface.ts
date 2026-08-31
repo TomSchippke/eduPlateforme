@@ -10,6 +10,11 @@ import { S3Storage } from "./s3";
 import { VercelBlobStorage } from "./vercel_blob";
 
 export function getStorage(): StorageProvider {
+  // Auto-detect Vercel Blob if the token is present (added by Vercel automatically)
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    return new VercelBlobStorage();
+  }
+
   const provider = process.env.STORAGE_PROVIDER || "local";
   
   if (provider === "vercel_blob") {
