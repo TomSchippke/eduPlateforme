@@ -1,6 +1,15 @@
-import { PDFParse } from "pdf-parse";
+// Polyfill for DOMMatrix which is required by some versions of pdf.js/pdf-parse
+if (typeof global !== "undefined" && typeof global.DOMMatrix === "undefined") {
+  (global as any).DOMMatrix = class DOMMatrix {
+    constructor() {}
+  };
+}
+
 import mammoth from "mammoth";
 import fs from "fs/promises";
+
+// We use require to ensure the polyfill runs BEFORE pdf-parse is evaluated
+const PDFParse = require("pdf-parse");
 
 /**
  * Extract text content from a document buffer based on its file type.
@@ -46,13 +55,10 @@ async function extractFromPDF(buffer: Buffer): Promise<string> {
     }
 
     // Add page markers for chunking
-    // pdf-parse doesn't provide page-level text natively,
-    // but we can estimate based on the numpages
     if (numPages <= 1) {
       return text;
     }
 
-    // Simple heuristic: split text roughly by pages
     const avgCharsPerPage = Math.ceil(text.length / numPages);
     const parts: string[] = [];
 
