@@ -517,8 +517,14 @@ export function ChatInterface({
                 <FormattedMessage content={message.content} />
               </div>
               {(message.createdAt || message.chapterName) && (
-                <div className={`flex justify-between items-center text-[10px] mt-2 pt-2 border-t ${message.role === "user" ? "border-indigo-400/30 text-indigo-200" : "border-slate-100 text-slate-400"}`}>
-                  <span>{message.chapterName ? `Chapitre : ${message.chapterName}` : ""}</span>
+                <div className={`flex justify-between items-center text-[10px] ${
+                  message.role === "user" 
+                    ? "mt-1 pt-1 text-indigo-200 justify-end" 
+                    : "mt-2 pt-2 border-t border-slate-100 text-slate-400"
+                }`}>
+                  {message.role !== "user" && (
+                    <span>{message.chapterName ? `Chapitre : ${message.chapterName}` : ""}</span>
+                  )}
                   <span>{message.createdAt ? new Date(message.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                 </div>
               )}
