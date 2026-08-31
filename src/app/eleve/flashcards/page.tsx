@@ -118,7 +118,7 @@ export default function FlashcardsPage() {
               <ArrowLeft className="h-5 w-5 mr-2" /> Précédente
             </Button>
             <Button 
-              variant="default" 
+              variant="primary" 
               size="lg" 
               onClick={handleNext} 
               disabled={currentIndex === flashcards.length - 1}
