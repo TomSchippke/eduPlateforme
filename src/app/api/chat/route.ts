@@ -328,19 +328,18 @@ export async function POST(request: Request) {
         }
 
         // Update Level
-        const prevLevelRow = await prisma.studentChapterLevel.findUnique({
-          where: { eleveId_chapitreId: { eleveId: user.id, chapitreId: conversation.currentChapterId as string } }
-        });
-        
-        // Use the level of the *previous* question's chapter to evaluate it
         if (conversation.currentChapterId) {
+          const prevLevelRow = await prisma.studentChapterLevel.findUnique({
+            where: { eleveId_chapitreId: { eleveId: user.id, chapitreId: conversation.currentChapterId } }
+          });
+          
           const prevLvl = prevLevelRow ? calculateDecayedLevel(prevLevelRow.level, prevLevelRow.updatedAt) : 3.0;
           const { newLevel, newHistory } = computeNextLevel(
             prevLvl,
             "REVISE",
             conversation.currentQuestionType as QuestionType,
             evaluation,
-            prevLevelRow ? prevLevelRow.history : []
+            prevLevelRow && prevLevelRow.history ? prevLevelRow.history as any : []
           );
 
           await prisma.studentChapterLevel.upsert({
