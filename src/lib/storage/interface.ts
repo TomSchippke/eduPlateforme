@@ -10,8 +10,10 @@ import { S3Storage } from "./s3";
 import { VercelBlobStorage } from "./vercel_blob";
 
 export function getStorage(): StorageProvider {
-  // Auto-detect Vercel Blob if the token is present (added by Vercel automatically)
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  // En production sur Vercel, on force Vercel Blob. 
+  // S'il manque le token, @vercel/blob renverra une erreur claire (Missing token)
+  // au lieu d'essayer de créer un dossier avec fs.mkdir.
+  if (process.env.VERCEL === "1" || process.env.BLOB_READ_WRITE_TOKEN) {
     return new VercelBlobStorage();
   }
 
