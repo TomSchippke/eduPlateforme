@@ -368,10 +368,10 @@ export async function POST(request: Request) {
         if (data.trouve_dans_cours) {
           cleanedResponse = data.explication;
           if (data.exemple_hors_cours) {
-            cleanedResponse += `\n\n **Pour l'illustrer autrement** : ${data.exemple_hors_cours}`;
+            cleanedResponse += `\n\n**Pour l'illustrer autrement** : ${data.exemple_hors_cours}`;
           }
           if (data.mini_question) {
-            cleanedResponse += `\n\n **Mini-question**: ${data.mini_question}`;
+            cleanedResponse += `\n\n**Question**: ${data.mini_question}`;
           }
         } else {
           cleanedResponse = data.message_si_non_trouve || "Désolé, je n'ai pas pu trouver cela dans ton cours.";

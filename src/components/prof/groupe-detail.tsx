@@ -156,13 +156,13 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     }
   }
 
-  async function handleAddChapitre(title: string) {
+  async function handleAddChapitre(title: string, focusConcepts: string[]) {
     setLoading(true);
     try {
       await fetch("/api/prof/chapitres", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupeId: groupe.id, title }),
+        body: JSON.stringify({ groupeId: groupe.id, title, focusConcepts }),
       });
       setShowAddChapitre(false);
       router.refresh();
@@ -171,13 +171,13 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     }
   }
 
-  async function handleEditChapitre(chapitreId: string, title: string) {
+  async function handleEditChapitre(chapitreId: string, title: string, focusConcepts: string[]) {
     setLoading(true);
     try {
       await fetch(`/api/prof/chapitres/${chapitreId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title, focusConcepts }),
       });
       setEditChapitre(null);
       router.refresh();
@@ -237,7 +237,7 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     }
   }
 
-  async function handleUploadFile(chapitreId: string, file: File, visibility: string, docType: string, keywords: string) {
+  async function handleUploadFile(chapitreId: string, file: File, visibility: string, docType: string) {
     setLoading(true);
     try {
       const formData = new FormData();
@@ -245,7 +245,6 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
       formData.append("chapitreId", chapitreId);
       formData.append("visibility", visibility);
       formData.append("docType", docType);
-      formData.append("keywords", keywords);
 
       const res = await fetch("/api/documents/upload", {
         method: "POST",
@@ -304,18 +303,13 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     }
   }
 
-  async function handleUpdateDoc(docId: string, visibility: string, docType: string, keywords: string) {
+  async function handleUpdateDoc(docId: string, visibility: string, docType: string) {
     setLoading(true);
     try {
-      const keywordsArray = keywords
-        .split(",")
-        .map((k) => k.trim())
-        .filter((k) => k.length > 0);
-
       const res = await fetch(`/api/documents/${docId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visibility, docType, keywords: keywordsArray }),
+        body: JSON.stringify({ visibility, docType }),
       });
 
       if (!res.ok) {
@@ -377,14 +371,14 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
     router.refresh();
   }
 
-  async function handleEditDocSubmit(visibility: string, docType: string, keywords: string) {
+  async function handleEditDocSubmit(visibility: string, docType: string) {
     if (!editDoc) return;
     setLoading(true);
     try {
       await fetch(`/api/documents/${editDoc.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visibility, docType, keywords: keywords.split(",").map(k => k.trim()).filter(Boolean) }),
+        body: JSON.stringify({ visibility, docType }),
       });
       setEditDoc(null);
       router.refresh();
@@ -643,8 +637,8 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
       <UploadDocumentModal
         open={showUploadDoc.open}
         onClose={() => setShowUploadDoc({ chapitreId: "", open: false })}
-        onSubmit={(file, visibility, docType, keywords) =>
-          handleUploadFile(showUploadDoc.chapitreId, file, visibility, docType, keywords)
+        onSubmit={(file, visibility, docType) =>
+          handleUploadFile(showUploadDoc.chapitreId, file, visibility, docType)
         }
         loading={loading}
       />
@@ -653,8 +647,8 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
           doc={editDoc}
           open={!!editDoc}
           onClose={() => setEditDoc(null)}
-          onSubmit={(visibility, docType, keywords) =>
-            handleUpdateDoc(editDoc.id, visibility, docType, keywords)
+          onSubmit={(visibility, docType) =>
+            handleUpdateDoc(editDoc.id, visibility, docType)
           }
           loading={loading}
         />
@@ -1320,13 +1314,20 @@ function DSTab({
 // --- Modals ---
 
 function AddChapitreModal({ open, onClose, onSubmit, loading }: {
-  open: boolean; onClose: () => void; onSubmit: (title: string) => void; loading: boolean;
+  open: boolean; onClose: () => void; onSubmit: (title: string, focusConcepts: string[]) => void; loading: boolean;
 }) {
   const [title, setTitle] = useState("");
+  const [focusConcepts, setFocusConcepts] = useState("");
   return (
     <Modal open={open} onClose={onClose} title="Nouveau chapitre">
-      <form onSubmit={(e) => { e.preventDefault(); onSubmit(title); setTitle(""); }} className="space-y-4">
+      <form onSubmit={(e) => { 
+        e.preventDefault(); 
+        onSubmit(title, focusConcepts.split(",").map(k => k.trim()).filter(Boolean)); 
+        setTitle(""); 
+        setFocusConcepts(""); 
+      }} className="space-y-4">
         <Input label="Titre du chapitre" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input label="Mots-clés (séparés par des virgules)" value={focusConcepts} onChange={(e) => setFocusConcepts(e.target.value)} placeholder="macro-économie, PIB" />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" type="button" onClick={onClose}>Annuler</Button>
           <Button type="submit" loading={loading}>Créer</Button>
@@ -1432,12 +1433,11 @@ function AddTemplateModal({ open, onClose, onSubmit, loading }: {
 }
 
 function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
-  open: boolean; onClose: () => void; onSubmit: (file: File, visibility: string, docType: string, keywords: string) => void; loading: boolean;
+  open: boolean; onClose: () => void; onSubmit: (file: File, visibility: string, docType: string) => void; loading: boolean;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [visibility, setVisibility] = useState("BOTH");
   const [docType, setDocType] = useState("COURS");
-  const [keywords, setKeywords] = useState("");
 
   const docTypes = ["COURS", "EXERCICES", "SUJET_DS", "CORRECTION_DS", "CORRECTION_EXERCICES", "SUJET_DM", "COMPLEMENTS", "AUTRE"];
 
@@ -1446,9 +1446,8 @@ function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
       <form onSubmit={(e) => {
         e.preventDefault();
         if (file) {
-          onSubmit(file, visibility, docType, keywords);
+          onSubmit(file, visibility, docType);
           setFile(null);
-          setKeywords("");
         }
       }} className="space-y-4">
         <div>
@@ -1481,14 +1480,7 @@ function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
           </div>
         </div>
 
-        <Input
-          label="Mots-clés (séparés par des virgules)"
-          value={keywords}
-          onChange={(e) => setKeywords(e.target.value)}
-          placeholder="ex: macro-économie, PIB"
-        />
-
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" type="button" onClick={onClose}>Annuler</Button>
           <Button type="submit" loading={loading} disabled={!file}>Upload</Button>
         </div>
@@ -1498,11 +1490,10 @@ function UploadDocumentModal({ open, onClose, onSubmit, loading }: {
 }
 
 function EditDocumentModal({ doc, open, onClose, onSubmit, loading }: {
-  doc: any; open: boolean; onClose: () => void; onSubmit: (visibility: string, docType: string, keywords: string) => void; loading: boolean;
+  doc: any; open: boolean; onClose: () => void; onSubmit: (visibility: string, docType: string) => void; loading: boolean;
 }) {
   const [visibility, setVisibility] = useState(doc.visibility || "BOTH");
   const [docType, setDocType] = useState(doc.docType || "COURS");
-  const [keywords, setKeywords] = useState((doc.keywords || []).join(", "));
 
   const docTypes = ["COURS", "EXERCICES", "SUJET_DS", "CORRECTION_DS", "CORRECTION_EXERCICES", "SUJET_DM", "COMPLEMENTS", "AUTRE"];
 
@@ -1510,7 +1501,7 @@ function EditDocumentModal({ doc, open, onClose, onSubmit, loading }: {
     <Modal open={open} onClose={onClose} title="Modifier le document" size="lg">
       <form onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(visibility, docType, keywords);
+        onSubmit(visibility, docType);
       }} className="space-y-4">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1531,12 +1522,6 @@ function EditDocumentModal({ doc, open, onClose, onSubmit, loading }: {
             </select>
           </div>
         </div>
-
-        <Input
-          label="Mots-clés (séparés par des virgules)"
-          value={keywords}
-          onChange={(e) => setKeywords(e.target.value)}
-        />
 
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" type="button" onClick={onClose}>Annuler</Button>
@@ -1621,15 +1606,20 @@ function EditGroupeModal({ open, onClose, onSubmit, initialName, loading }: {
   );
 }
 
-function EditChapitreModal({ open, onClose, onSubmit, initialTitle, loading }: {
-  open: boolean; onClose: () => void; onSubmit: (title: string) => void; initialTitle: string; loading: boolean;
+function EditChapitreModal({ open, onClose, onSubmit, initialTitle, initialFocusConcepts, loading }: {
+  open: boolean; onClose: () => void; onSubmit: (title: string, focusConcepts: string[]) => void; initialTitle: string; initialFocusConcepts: string[]; loading: boolean;
 }) {
   const [title, setTitle] = useState(initialTitle);
+  const [focusConcepts, setFocusConcepts] = useState(initialFocusConcepts.join(", "));
 
   return (
     <Modal open={open} onClose={onClose} title="Renommer le chapitre">
-      <form onSubmit={(e) => { e.preventDefault(); onSubmit(title); }} className="space-y-4">
+      <form onSubmit={(e) => { 
+        e.preventDefault(); 
+        onSubmit(title, focusConcepts.split(",").map(k => k.trim()).filter(Boolean)); 
+      }} className="space-y-4">
         <Input label="Titre du chapitre" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Input label="Mots-clés (séparés par des virgules)" value={focusConcepts} onChange={(e) => setFocusConcepts(e.target.value)} placeholder="macro-économie, PIB" />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" type="button" onClick={onClose}>Annuler</Button>
           <Button type="submit" loading={loading} disabled={!title.trim()}>Enregistrer</Button>

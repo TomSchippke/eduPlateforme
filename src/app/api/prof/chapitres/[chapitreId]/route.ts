@@ -13,10 +13,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ chapi
 
   try {
     const body = await request.json();
-    const parsed = z.object({ title: z.string().min(1) }).safeParse(body);
+    const parsed = z.object({ 
+      title: z.string().min(1).optional(),
+      focusConcepts: z.array(z.string()).optional()
+    }).safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json({ error: "Titre invalide" }, { status: 400 });
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
 
     const chapitre = await prisma.chapitre.findUnique({
@@ -28,9 +31,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ chapi
       return NextResponse.json({ error: "Chapitre non trouvé ou accès refusé" }, { status: 404 });
     }
 
+    const dataToUpdate: any = {};
+    if (parsed.data.title !== undefined) dataToUpdate.title = parsed.data.title;
+    if (parsed.data.focusConcepts !== undefined) dataToUpdate.focusConcepts = parsed.data.focusConcepts;
+
     await prisma.chapitre.update({
       where: { id: chapitreId },
-      data: { title: parsed.data.title },
+      data: dataToUpdate,
     });
 
     return NextResponse.json({ success: true });

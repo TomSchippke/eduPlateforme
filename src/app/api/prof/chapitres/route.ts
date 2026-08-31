@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     groupeId: z.string(),
     title: z.string().min(1),
     order: z.number().optional(),
+    focusConcepts: z.array(z.string()).optional(),
   }).safeParse(body);
 
   if (!parsed.success) {
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
       groupeId: parsed.data.groupeId,
       title: parsed.data.title,
       order: parsed.data.order ?? (maxOrder?.order ?? 0) + 1,
+      focusConcepts: parsed.data.focusConcepts ?? [],
     },
   });
 

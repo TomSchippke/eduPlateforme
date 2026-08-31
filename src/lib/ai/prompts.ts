@@ -13,8 +13,8 @@ export function getExpliqueMoiPrompt(context: string, groupe: string, teacherNot
     : "";
 
   const passionsInstruction = passions.length > 0
-    ? `\nPASSIONS DE L'ÉLÈVE : ${passions.join(', ')}. Utilise régulièrement des analogies, métaphores ou exemples liés à ces domaines pour expliquer les concepts et rendre tes réponses concrètes pour lui.\n`
-    : "";
+    ? `\nPASSIONS DE L'ÉLÈVE : ${passions.join(', ')}. Pour remplir le champ "exemple_hors_cours", essaie en priorité d'utiliser des analogies, métaphores ou exemples liés à ces passions. Si le concept n'a vraiment aucun rapport avec ces passions et que l'analogie serait trop forcée, utilise librement un autre domaine au choix.\n`
+    : `\nPour remplir le champ "exemple_hors_cours", utilise une analogie, métaphore ou un exemple de la vie courante au choix.\n`;
 
   return `Tu es un assistant pédagogique pour des élèves de ${groupe} en France. Tu aides les élèves à comprendre leur cours.
 ${teacherNoteInstruction}${focusInstruction}${passionsInstruction}
