@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getStorage } from "@/lib/storage/interface";
+import { processDocument } from "@/lib/documents/process";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -68,13 +69,13 @@ export async function POST(request: Request) {
       },
     });
 
-    // Trigger async processing
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-    fetch(`${baseUrl}/api/documents/process`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ documentId: document.id }),
-    }).catch(console.error); // Fire and forget
+    // Process document immediately (awaits completion so Vercel doesn't kill the lambda)
+    try {
+      await processDocument(document.id);
+    } catch (processError) {
+      console.error("Error processing document:", processError);
+      // We don't fail the upload if processing fails, but it will stay PENDING or ERROR
+    }
 
     return NextResponse.json(document, { status: 201 });
   } catch (error) {
