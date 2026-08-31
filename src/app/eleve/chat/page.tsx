@@ -20,7 +20,7 @@ export default async function ChatPage() {
         include: {
           chapitres: {
             orderBy: { order: "asc" },
-            select: { id: true, title: true },
+            select: { id: true, title: true, focusConcepts: true },
           },
           datesDS: {
             where: { date: { gte: new Date() } },

@@ -18,6 +18,8 @@ const chatSchema = z.object({
   chapitresIdsRevise: z.array(z.string()).optional(),
   conversationId: z.string().nullable().optional(),
   difficultyMode: z.enum(["AUTO", "FACILE", "MOYEN", "AVANCE"]).optional(),
+  exerciseTypes: z.array(z.string()).optional(),
+  selectedKeyword: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
 
-    const { message, mode, groupeId, chapitreId, dateDSId, chapitresIdsRevise, conversationId, difficultyMode } =
+    const { message, mode, groupeId, chapitreId, dateDSId, chapitresIdsRevise, conversationId, difficultyMode, exerciseTypes, selectedKeyword } =
       parsed.data;
 
     // Validate word count (backend revalidation)
@@ -187,6 +189,8 @@ export async function POST(request: Request) {
           difficultyMode: difficultyMode || "AUTO",
           consecutiveFails: 0,
           notionsToReview: [],
+          exerciseTypes: exerciseTypes && exerciseTypes.length > 0 ? exerciseTypes : ["EXERCICE", "QCM", "OPEN"],
+          selectedKeyword: selectedKeyword || null,
         },
         include: { messages: true },
       });
@@ -248,18 +252,22 @@ export async function POST(request: Request) {
         }
       }
 
-      const questionTypes: QuestionType[] = ['QCM', 'OPEN', 'EXERCICE'];
+      const baseTypes = conversation.exerciseTypes && conversation.exerciseTypes.length > 0
+        ? conversation.exerciseTypes as QuestionType[]
+        : ['QCM', 'OPEN', 'EXERCICE'] as QuestionType[];
+      const questionTypes: QuestionType[] = baseTypes;
+
       if (!conversation.currentQuestionType) {
         nextQuestionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
         questionTypeStreak = 1;
       } else {
         const pStay = Math.max(0, 1 - (conversation.questionTypeStreak / 3));
-        if (Math.random() < pStay) {
+        if (Math.random() < pStay && questionTypes.includes(conversation.currentQuestionType as QuestionType)) {
           nextQuestionType = conversation.currentQuestionType as QuestionType;
           questionTypeStreak = conversation.questionTypeStreak + 1;
         } else {
           const otherTypes = questionTypes.filter(t => t !== conversation.currentQuestionType);
-          nextQuestionType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+          nextQuestionType = otherTypes.length > 0 ? otherTypes[Math.floor(Math.random() * otherTypes.length)] : questionTypes[0];
           questionTypeStreak = 1;
         }
       }
@@ -272,14 +280,27 @@ export async function POST(request: Request) {
       }
 
       let newChunks: any[] = [];
-      if (nextQuestionSubtype === 'ADAPT_EXISTING') {
-        const courseChunks = await getRandomChunks([nextChapterId as string], 2, ['COURS', 'AUTRE']);
-        const exoChunks = await getRandomChunks([nextChapterId as string], 1, ['EXERCICES']);
-        newChunks = [...courseChunks, ...exoChunks];
-      } else if (nextQuestionSubtype === 'CREATE_NEW') {
-        newChunks = await getRandomChunks([nextChapterId as string], 3, ['COURS', 'AUTRE']);
+      
+      if (conversation.selectedKeyword) {
+        if (nextQuestionSubtype === 'ADAPT_EXISTING') {
+          const courseChunks = await searchChunks(conversation.selectedKeyword, [nextChapterId as string], { topK: 2 });
+          const exoChunks = await searchChunks(conversation.selectedKeyword + " exercice", [nextChapterId as string], { topK: 1 });
+          newChunks = [...courseChunks, ...exoChunks];
+        } else if (nextQuestionSubtype === 'CREATE_NEW') {
+          newChunks = await searchChunks(conversation.selectedKeyword, [nextChapterId as string], { topK: 3 });
+        } else {
+          newChunks = await searchChunks(conversation.selectedKeyword, [nextChapterId as string], { topK: 2 });
+        }
       } else {
-        newChunks = await getRandomChunks([nextChapterId as string], 2, ['COURS', 'AUTRE']);
+        if (nextQuestionSubtype === 'ADAPT_EXISTING') {
+          const courseChunks = await getRandomChunks([nextChapterId as string], 2, ['COURS', 'AUTRE']);
+          const exoChunks = await getRandomChunks([nextChapterId as string], 1, ['EXERCICES']);
+          newChunks = [...courseChunks, ...exoChunks];
+        } else if (nextQuestionSubtype === 'CREATE_NEW') {
+          newChunks = await getRandomChunks([nextChapterId as string], 3, ['COURS', 'AUTRE']);
+        } else {
+          newChunks = await getRandomChunks([nextChapterId as string], 2, ['COURS', 'AUTRE']);
+        }
       }
 
       const lastQuestionChunks = conversation.lastQuestionChunks

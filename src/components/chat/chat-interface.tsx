@@ -40,7 +40,7 @@ function FormattedMessage({ content }: { content: string }) {
 interface ChatGroup {
   id: string;
   name: string;
-  chapitres: Array<{ id: string; title: string }>;
+  chapitres: Array<{ id: string; title: string; focusConcepts?: string[] }>;
   datesDS: Array<{
     id: string;
     title: string;
@@ -95,6 +95,8 @@ export function ChatInterface({
   const [selectedDS, setSelectedDS] = useState<string>("");
   const [selectedChapitresRevise, setSelectedChapitresRevise] = useState<string[]>([]);
   const [difficultyMode, setDifficultyMode] = useState<"AUTO" | "FACILE" | "MOYEN" | "AVANCE">("AUTO");
+  const [exerciseTypes, setExerciseTypes] = useState<string[]>(["EXERCICE", "QCM", "OPEN"]);
+  const [selectedKeyword, setSelectedKeyword] = useState<string>("");
   const [showConfig, setShowConfig] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
 
@@ -148,6 +150,10 @@ export function ChatInterface({
         body.chapitreId = selectedChapitre;
       } else if (mode === "REVISE") {
         body.difficultyMode = difficultyMode;
+        body.exerciseTypes = exerciseTypes;
+        if (selectedKeyword) {
+          body.selectedKeyword = selectedKeyword;
+        }
         if (selectedDS) {
           body.dateDSId = selectedDS;
         } else if (selectedChapitresRevise.length > 0) {
@@ -430,6 +436,58 @@ export function ChatInterface({
                       Si aucun chapitre n'est sélectionné, la révision portera sur tout le programme.
                     </p>
                   )}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Types d'exercices
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "EXERCICE", label: "Exercices" },
+                    { id: "QCM", label: "QCM" },
+                    { id: "OPEN", label: "Questions de cours" }
+                  ].map(type => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => {
+                        if (exerciseTypes.includes(type.id)) {
+                          setExerciseTypes(exerciseTypes.filter(t => t !== type.id));
+                        } else {
+                          setExerciseTypes([...exerciseTypes, type.id]);
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        exerciseTypes.includes(type.id)
+                          ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedChapitresRevise.length === 1 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Concept clé à cibler (optionnel)
+                  </label>
+                  <select
+                    value={selectedKeyword}
+                    onChange={(e) => setSelectedKeyword(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Aucun (Global au chapitre)</option>
+                    {selectedGroupe.chapitres
+                      .find(c => c.id === selectedChapitresRevise[0])
+                      ?.focusConcepts?.map((concept, idx) => (
+                        <option key={idx} value={concept}>{concept}</option>
+                      ))}
+                  </select>
                 </div>
               )}
 

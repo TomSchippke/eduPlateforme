@@ -307,6 +307,8 @@ model Conversation {
   difficultyMode      String  @default("AUTO") @map("difficulty_mode")
   currentChapterId    String? @map("current_chapter_id")
   chapterStreak       Int     @default(0) @map("chapter_streak")
+  exerciseTypes       String[] @default(["EXERCICE", "QCM", "OPEN"]) @map("exercise_types")
+  selectedKeyword     String?  @map("selected_keyword")
   currentQuestionType String? @map("current_question_type")
   questionTypeStreak  Int     @default(0) @map("question_type_streak")
   lastQuestionChunks  Json?   @map("last_question_chunks")

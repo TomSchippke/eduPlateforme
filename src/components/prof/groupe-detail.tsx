@@ -664,8 +664,9 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         <EditChapitreModal
           open={!!editChapitre}
           onClose={() => setEditChapitre(null)}
-          onSubmit={(title) => handleEditChapitre(editChapitre.id, title)}
+          onSubmit={(title, focusConcepts) => handleEditChapitre(editChapitre.id, title, focusConcepts)}
           initialTitle={editChapitre.title}
+          initialFocusConcepts={editChapitre.focusConcepts || []}
           loading={loading}
         />
       )}

@@ -60,7 +60,7 @@ export default function FlashcardsPage() {
           Mes Flashcards
         </h1>
         <p className="text-slate-500 mt-2">
-          Créées automatiquement par l'IA lors de tes révisions pour t'aider à mémoriser tes faiblesses.
+          Créées automatiquement lors de tes révisions pour t'aider à mémoriser tes faiblesses.
         </p>
       </div>
 
@@ -79,12 +79,12 @@ export default function FlashcardsPage() {
             </span>
           </div>
 
-          <div 
+          <div
             className="relative h-[300px] sm:h-[400px] w-full perspective-1000 cursor-pointer group"
             onClick={handleFlip}
           >
             <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? "rotate-y-180" : ""}`}>
-              
+
               {/* Front (Question) */}
               <div className="absolute inset-0 backface-hidden card p-8 sm:p-12 flex flex-col items-center justify-center text-center bg-white border-2 border-indigo-100 shadow-lg hover:border-indigo-300 transition-colors">
                 <p className="text-sm font-semibold text-indigo-500 uppercase tracking-wider mb-6">Question</p>
@@ -109,18 +109,18 @@ export default function FlashcardsPage() {
           </div>
 
           <div className="flex justify-center gap-4 pt-4">
-            <Button 
-              variant="outline" 
-              size="lg" 
-              onClick={handlePrev} 
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handlePrev}
               disabled={currentIndex === 0}
             >
               <ArrowLeft className="h-5 w-5 mr-2" /> Précédente
             </Button>
-            <Button 
-              variant="primary" 
-              size="lg" 
-              onClick={handleNext} 
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleNext}
               disabled={currentIndex === flashcards.length - 1}
             >
               Suivante <ArrowRight className="h-5 w-5 ml-2" />
