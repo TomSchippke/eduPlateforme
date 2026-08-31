@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduPlateforme — Votre espace pédagogique",
+  title: "EduPlateforme - Votre espace pédagogique",
   description: "Plateforme pédagogique pour professeurs et élèves avec assistant IA intégré",
 };
 

@@ -302,6 +302,7 @@ export function ChatInterface({
             <div className="flex gap-2">
               <button
                 onClick={() => setMode("EXPLIQUE")}
+                title="Pour expliquer le cours et les exercices vus avec le prof et disponibles en ligne, approfondir certaines notions ou demander de l'aide sur un exercice."
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${mode === "EXPLIQUE"
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -312,6 +313,7 @@ export function ChatInterface({
               </button>
               <button
                 onClick={() => setMode("REVISE")}
+                title="Pour s'entraîner sous forme d'exercices interactifs pour un DS ou sur des chapitres spécifiques."
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${mode === "REVISE"
                     ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
