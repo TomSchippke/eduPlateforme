@@ -120,6 +120,7 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
   const [editDS, setEditDS] = useState<any>(null);
   const [editGroupe, setEditGroupe] = useState(false);
   const [editChapitre, setEditChapitre] = useState<any>(null);
+  const [editAnnonce, setEditAnnonce] = useState<{id: string, title: string, content: string} | null>(null);
   const tabs: { id: TabId; label: string; icon: React.ElementType; count?: number }[] = [
     { id: "chapitres", label: "Chapitres", icon: BookOpen, count: groupe.chapitres.length },
     { id: "eleves", label: "Élèves", icon: Users, count: groupe.memberships.length },
@@ -271,6 +272,32 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         body: JSON.stringify({ groupeId: groupe.id, title, content }),
       });
       setShowAddAnnonce(false);
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleEditAnnonce(annonceId: string, title: string, content: string) {
+    setLoading(true);
+    try {
+      await fetch(`/api/prof/annonces/${annonceId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content }),
+      });
+      setEditAnnonce(null);
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteAnnonce(annonceId: string) {
+    if (!confirm("Voulez-vous vraiment supprimer cette annonce ?")) return;
+    setLoading(true);
+    try {
+      await fetch(`/api/prof/annonces/${annonceId}`, { method: "DELETE" });
       router.refresh();
     } finally {
       setLoading(false);
@@ -553,6 +580,8 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         <AnnoncesTab
           annonces={groupe.annonces}
           onAddAnnonce={() => setShowAddAnnonce(true)}
+          onEditAnnonce={(a) => setEditAnnonce(a)}
+          onDeleteAnnonce={handleDeleteAnnonce}
         />
       )}
 
@@ -589,6 +618,16 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
         onSubmit={handleAddAnnonce}
         loading={loading}
       />
+      {editAnnonce && (
+        <EditAnnonceModal
+          open={!!editAnnonce}
+          onClose={() => setEditAnnonce(null)}
+          onSubmit={(title, content) => handleEditAnnonce(editAnnonce.id, title, content)}
+          loading={loading}
+          initialTitle={editAnnonce.title}
+          initialContent={editAnnonce.content}
+        />
+      )}
       <AddCoursModal
         open={showAddCours}
         onClose={() => setShowAddCours(false)}
@@ -902,9 +941,13 @@ function ElevesTab({
 function AnnoncesTab({
   annonces,
   onAddAnnonce,
+  onEditAnnonce,
+  onDeleteAnnonce,
 }: {
   annonces: GroupeDetailProps["groupe"]["annonces"];
   onAddAnnonce: () => void;
+  onEditAnnonce: (annonce: {id: string, title: string, content: string}) => void;
+  onDeleteAnnonce: (id: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -923,9 +966,17 @@ function AnnoncesTab({
       ) : (
         <div className="space-y-3">
           {annonces.map((a) => (
-            <div key={a.id} className="card p-5">
+            <div key={a.id} className="card p-5 group relative">
+              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600" onClick={() => onEditAnnonce(a)}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-red-600" onClick={() => onDeleteAnnonce(a.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-slate-900">{a.title}</h3>
+                <h3 className="font-semibold text-slate-900 pr-20">{a.title}</h3>
                 <span className="text-xs text-slate-400">{formatDate(a.publishedAt)}</span>
               </div>
               <p className="text-sm text-slate-600 whitespace-pre-wrap">{a.content}</p>
@@ -1298,6 +1349,26 @@ function AddAnnonceModal({ open, onClose, onSubmit, loading }: {
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" type="button" onClick={onClose}>Annuler</Button>
           <Button type="submit" loading={loading}>Publier</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function EditAnnonceModal({ open, onClose, onSubmit, loading, initialTitle, initialContent }: {
+  open: boolean; onClose: () => void; onSubmit: (title: string, content: string) => void; loading: boolean;
+  initialTitle: string; initialContent: string;
+}) {
+  const [title, setTitle] = useState(initialTitle);
+  const [content, setContent] = useState(initialContent);
+  return (
+    <Modal open={open} onClose={onClose} title="Modifier l'annonce">
+      <form onSubmit={(e) => { e.preventDefault(); onSubmit(title, content); }} className="space-y-4">
+        <Input label="Titre" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <Textarea label="Contenu" value={content} onChange={(e) => setContent(e.target.value)} rows={4} required />
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="outline" type="button" onClick={onClose}>Annuler</Button>
+          <Button type="submit" loading={loading}>Enregistrer</Button>
         </div>
       </form>
     </Modal>

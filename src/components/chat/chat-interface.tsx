@@ -244,7 +244,7 @@ export function ChatInterface({
             const ch = selectedGroupe.chapitres.find(c => c.id === selectedChapitresRevise[0]);
             if (ch) headerSubtitle += ` — ${ch.title}`;
           } else {
-             headerSubtitle += ` — ${selectedChapitresRevise.length} chapitres`;
+            headerSubtitle += ` — ${selectedChapitresRevise.length} chapitres`;
           }
         } else {
           headerSubtitle += " — Programme complet";
@@ -273,10 +273,10 @@ export function ChatInterface({
           {/* Quota counter */}
           <div
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${quotaRemaining <= 2
-                ? "bg-red-100 text-red-700"
-                : quotaRemaining <= 5
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-emerald-100 text-emerald-700"
+              ? "bg-red-100 text-red-700"
+              : quotaRemaining <= 5
+                ? "bg-amber-100 text-amber-700"
+                : "bg-emerald-100 text-emerald-700"
               }`}
           >
             <MessageCircle className="h-3.5 w-3.5" />
@@ -304,8 +304,8 @@ export function ChatInterface({
                 onClick={() => setMode("EXPLIQUE")}
                 title="Pour expliquer le cours et les exercices vus avec le prof et disponibles en ligne, approfondir certaines notions ou demander de l'aide sur un exercice."
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${mode === "EXPLIQUE"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
               >
                 <BookOpen className="h-4 w-4" />
@@ -315,8 +315,8 @@ export function ChatInterface({
                 onClick={() => setMode("REVISE")}
                 title="Pour s'entraîner sous forme d'exercices interactifs pour un DS ou sur des chapitres spécifiques."
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${mode === "REVISE"
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
               >
                 <Brain className="h-4 w-4" />
@@ -432,7 +432,7 @@ export function ChatInterface({
                   )}
                 </div>
               )}
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Niveau de difficulté initial
@@ -509,21 +509,19 @@ export function ChatInterface({
             className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
           >
             <div
-              className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 shadow-sm ${
-                message.role === "user"
-                  ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm"
-                  : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm"
-              }`}
+              className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 shadow-sm ${message.role === "user"
+                ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm"
+                : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm"
+                }`}
             >
               <div className="prose prose-sm prose-slate max-w-none break-words whitespace-pre-wrap">
                 <FormattedMessage content={message.content} />
               </div>
               {(message.createdAt || message.chapterName) && (
-                <div className={`flex justify-between items-center text-[10px] ${
-                  message.role === "user" 
-                    ? "mt-1 pt-1 text-indigo-200 justify-end" 
-                    : "mt-2 pt-2 border-t border-slate-100 text-slate-400"
-                }`}>
+                <div className={`flex justify-between items-center text-[10px] ${message.role === "user"
+                  ? "mt-1 pt-1 text-indigo-200 justify-end"
+                  : "mt-2 pt-2 border-t border-slate-100 text-slate-400"
+                  }`}>
                   {message.role !== "user" && (
                     <span>{message.chapterName ? `Chapitre : ${message.chapterName}` : ""}</span>
                   )}
@@ -538,19 +536,19 @@ export function ChatInterface({
           <div className="flex flex-col gap-2 mt-2 mb-4 animate-fade-in">
             <p className="text-xs text-slate-500 font-medium ml-2">Exemples pour commencer :</p>
             <div className="flex flex-wrap gap-2">
-              <button 
+              <button
                 onClick={() => handleSend("Je ne comprends pas l'exercice 1 question 2")}
                 className="text-left text-sm bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 shadow-sm"
               >
                 Je ne comprends pas l'exercice 1 question 2
               </button>
-              <button 
+              <button
                 onClick={() => handleSend("Je ne comprends pas la notion de période")}
                 className="text-left text-sm bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 shadow-sm"
               >
                 Je ne comprends pas la notion de période
               </button>
-              <button 
+              <button
                 onClick={() => handleSend("Je n'ai pas compris la formule de l'énergie cinétique dans le cours")}
                 className="text-left text-sm bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 shadow-sm"
               >
@@ -613,10 +611,10 @@ export function ChatInterface({
               {/* Word counter */}
               <div
                 className={`absolute bottom-2 right-14 text-xs px-1.5 py-0.5 rounded ${isOverLimit
-                    ? "text-red-600 bg-red-50 font-medium"
-                    : wordCount > MAX_WORDS * 0.8
-                      ? "text-amber-600"
-                      : "text-slate-400"
+                  ? "text-red-600 bg-red-50 font-medium"
+                  : wordCount > MAX_WORDS * 0.8
+                    ? "text-amber-600"
+                    : "text-slate-400"
                   }`}
               >
                 {wordCount}/{MAX_WORDS}
