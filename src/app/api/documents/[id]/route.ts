@@ -38,6 +38,16 @@ export async function DELETE(
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
+  // Delete the physical file from storage
+  try {
+    const { getStorage } = await import("@/lib/storage/interface");
+    const storage = getStorage();
+    await storage.delete(document.storageUrl);
+  } catch (err) {
+    console.error("Failed to delete file from storage:", err);
+    // Continue with DB deletion even if storage deletion fails
+  }
+
   await prisma.document.delete({
     where: { id },
   });
