@@ -23,15 +23,17 @@ async function main() {
 
   console.log("  ✓ Cleaned existing data");
 
-  const passwordHash = await bcrypt.hash("password123", 12);
+  const passwordHashProf = await bcrypt.hash("jojo", 12);
+  const passwordHashEleve = await bcrypt.hash("tomtom", 12);
+  const passwordHash = await bcrypt.hash("password123", 12); // Fallback pour les autres
 
   // Create professor
   const prof = await prisma.user.create({
     data: {
-      firstName: "Marie",
-      lastName: "Dupont",
-      identifiant: "m.dupont",
-      passwordHash,
+      firstName: "Joël",
+      lastName: "Schippke",
+      identifiant: "j.schippke",
+      passwordHash: passwordHashProf,
       role: "PROF",
       tenantId: "temp",
     },
@@ -43,7 +45,7 @@ async function main() {
     data: { tenantId: prof.id },
   });
 
-  console.log("  ✓ Created professor: m.dupont / password123");
+  console.log("  ✓ Created professor: j.schippke / jojo");
 
   // Create 2 groups
   const groupeTerminale = await prisma.groupe.create({
@@ -85,8 +87,18 @@ async function main() {
 
   console.log("  ✓ Created chapters");
 
-  // Create 4 students
+  // Create 5 students (including Tom)
   const eleves = await Promise.all([
+    prisma.user.create({
+      data: {
+        firstName: "Tom",
+        lastName: "Schippke",
+        identifiant: "t.schippke",
+        passwordHash: passwordHashEleve,
+        role: "ELEVE",
+        tenantId: prof.id,
+      },
+    }),
     prisma.user.create({
       data: {
         firstName: "Lucas",
@@ -129,17 +141,18 @@ async function main() {
     }),
   ]);
 
-  console.log("  ✓ Created 4 students (password: password123)");
+  console.log("  ✓ Created 5 students (Tom: tomtom, Others: password123)");
 
   // Add students to groups
   await Promise.all([
-    // Lucas, Emma, Noa → Terminale
+    // Tom, Lucas, Emma, Noa → Terminale
     prisma.groupeMembership.create({ data: { eleveId: eleves[0].id, groupeId: groupeTerminale.id } }),
     prisma.groupeMembership.create({ data: { eleveId: eleves[1].id, groupeId: groupeTerminale.id } }),
     prisma.groupeMembership.create({ data: { eleveId: eleves[2].id, groupeId: groupeTerminale.id } }),
+    prisma.groupeMembership.create({ data: { eleveId: eleves[3].id, groupeId: groupeTerminale.id } }),
     // Emma, Léa → BTS
-    prisma.groupeMembership.create({ data: { eleveId: eleves[1].id, groupeId: groupeBTS.id } }),
-    prisma.groupeMembership.create({ data: { eleveId: eleves[3].id, groupeId: groupeBTS.id } }),
+    prisma.groupeMembership.create({ data: { eleveId: eleves[2].id, groupeId: groupeBTS.id } }),
+    prisma.groupeMembership.create({ data: { eleveId: eleves[4].id, groupeId: groupeBTS.id } }),
   ]);
 
   console.log("  ✓ Added students to groups");
@@ -214,7 +227,8 @@ async function main() {
 
   console.log("\n🎉 Seed complete!");
   console.log("\n📋 Login credentials:");
-  console.log("  Prof : m.dupont / password123");
+  console.log("  Prof : j.schippke / jojo");
+  console.log("  Élève : t.schippke / tomtom");
   console.log("  Élève : l.martin / password123");
   console.log("  Élève : e.bernard / password123");
   console.log("  Élève : n.petit / password123");

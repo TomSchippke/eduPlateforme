@@ -8,7 +8,8 @@ import { useRouter } from "next/navigation";
 export default function ComptePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingPassions, setSavingPassions] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
   const [identifiant, setIdentifiant] = useState("");
   const [passions, setPassions] = useState<string[]>([]);
   const [newPassion, setNewPassion] = useState("");
@@ -28,22 +29,41 @@ export default function ComptePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const savePassions = async (newPassions: string[]) => {
+    setSavingPassions(true);
+    try {
+      const res = await fetch("/api/user/compte", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passions: newPassions }),
+      });
+      if (!res.ok) throw new Error("Erreur de sauvegarde");
+      setPassions(newPassions);
+    } catch (err) {
+      setMessage({ type: "error", text: "Erreur lors de la sauvegarde des centres d'intérêt." });
+    } finally {
+      setSavingPassions(false);
+    }
+  };
+
   const handleAddPassion = () => {
     if (newPassion.trim() && passions.length < 3 && !passions.includes(newPassion.trim())) {
-      setPassions([...passions, newPassion.trim()]);
+      const updated = [...passions, newPassion.trim()];
       setNewPassion("");
+      savePassions(updated);
     }
   };
 
   const handleRemovePassion = (p: string) => {
-    setPassions(passions.filter(x => x !== p));
+    const updated = passions.filter(x => x !== p);
+    savePassions(updated);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
-    if (password && password.length < 4) {
+    if (!password || password.length < 4) {
       setMessage({ type: "error", text: "Le mot de passe doit faire au moins 4 caractères." });
       return;
     }
@@ -53,23 +73,23 @@ export default function ComptePage() {
       return;
     }
 
-    setSaving(true);
+    setSavingPassword(true);
     try {
       const res = await fetch("/api/user/compte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passions, password: password || undefined }),
+        body: JSON.stringify({ password }),
       });
 
       if (!res.ok) throw new Error("Erreur");
 
-      setMessage({ type: "success", text: "Compte mis à jour avec succès !" });
+      setMessage({ type: "success", text: "Mot de passe modifié avec succès !" });
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setMessage({ type: "error", text: "Erreur lors de la mise à jour." });
+      setMessage({ type: "error", text: "Erreur lors de la modification du mot de passe." });
     } finally {
-      setSaving(false);
+      setSavingPassword(false);
     }
   };
 
@@ -97,7 +117,7 @@ export default function ComptePage() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <div className="space-y-6">
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <User className="h-5 w-5 text-slate-400" />
@@ -117,7 +137,13 @@ export default function ComptePage() {
           </div>
         </div>
 
-        <div className="card p-6 border-t-4 border-t-blue-500">
+        <div className="card p-6 border-t-4 border-t-blue-500 relative">
+          {savingPassions && (
+            <div className="absolute top-4 right-4 flex items-center text-sm text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Sauvegarde...
+            </div>
+          )}
           <h2 className="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
             <Heart className="h-5 w-5 text-blue-500" />
             Mes Centres d'Intérêt (Personnalisation de l'IA)
@@ -136,9 +162,9 @@ export default function ComptePage() {
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPassion())}
                 placeholder="Ajouter un centre d'intérêt..."
                 className="flex-1 border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                disabled={passions.length >= 3}
+                disabled={passions.length >= 3 || savingPassions}
               />
-              <Button type="button" onClick={handleAddPassion} disabled={passions.length >= 3 || !newPassion.trim()}>
+              <Button type="button" onClick={handleAddPassion} disabled={passions.length >= 3 || !newPassion.trim() || savingPassions}>
                 <Plus className="h-4 w-4 mr-2" /> Ajouter
               </Button>
             </div>
@@ -148,7 +174,7 @@ export default function ComptePage() {
                 {passions.map((p, idx) => (
                   <span key={idx} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200">
                     {p}
-                    <button type="button" onClick={() => handleRemovePassion(p)} className="hover:text-blue-900 hover:bg-blue-200 rounded-full p-0.5 transition-colors">
+                    <button type="button" onClick={() => handleRemovePassion(p)} disabled={savingPassions} className="hover:text-blue-900 hover:bg-blue-200 rounded-full p-0.5 transition-colors">
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -161,7 +187,7 @@ export default function ComptePage() {
           </div>
         </div>
 
-        <div className="card p-6">
+        <form onSubmit={handlePasswordSave} className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <Shield className="h-5 w-5 text-slate-400" />
             Mot de passe
@@ -190,16 +216,15 @@ export default function ComptePage() {
                 />
               </div>
             )}
+            <div className="flex justify-end pt-2">
+              <Button type="submit" disabled={savingPassword || !password} className="bg-blue-600 hover:bg-blue-700">
+                {savingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Modifier mon mot de passe
+              </Button>
+            </div>
           </div>
-        </div>
-
-        <div className="flex justify-end pt-2">
-          <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Enregistrer les modifications
-          </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
