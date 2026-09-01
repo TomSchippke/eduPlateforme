@@ -30,8 +30,7 @@ export function AppTour({ identifiant }: AppTourProps) {
     {
       target: "nav a[href='/prof/groupes']",
       content: "Les groupes sont le cœur de la plateforme. Cliquez sur 'Mes Groupes' pour continuer.",
-      
-      
+      hideFooter: true,
       skipBeacon: true,
     },
     {
@@ -40,10 +39,9 @@ export function AppTour({ identifiant }: AppTourProps) {
       skipBeacon: true,
     },
     {
-      target: ".tour-prof-group-card",
-      content: "Cliquez sur 'Terminale Spé Maths' pour voir les détails d'un groupe.",
-      
-      
+      target: ".tour-prof-group-card-terminale",
+      content: "Cliquez sur Terminale Spé Maths pour voir les détails.",
+      hideFooter: true,
       skipBeacon: true,
     },
     {
@@ -74,8 +72,7 @@ export function AppTour({ identifiant }: AppTourProps) {
     {
       target: "nav a[href='/prof/edt']",
       content: "L'emploi du temps permet de planifier les séances. Cliquez pour le découvrir !",
-      
-      
+      hideFooter: true,
       skipBeacon: true,
     },
     {
@@ -96,8 +93,7 @@ export function AppTour({ identifiant }: AppTourProps) {
     {
       target: "nav a[href='/eleve/cours']",
       content: "Ici tu retrouves tous les documents fournis par ton professeur. Clique dessus pour y accéder.",
-      
-      
+      hideFooter: true,
       skipBeacon: true,
     },
     {
@@ -108,20 +104,19 @@ export function AppTour({ identifiant }: AppTourProps) {
     {
       target: "nav a[href='/eleve/edt']",
       content: "Découvre ton emploi du temps ! Clique ici.",
-      
-      
+      hideFooter: true,
       skipBeacon: true,
     },
     {
       target: "nav a[href='/eleve/chat']",
       content: "Allons voir l'assistant IA, le cœur de la plateforme ! Clique sur le Chat.",
-      
-      
+      hideFooter: true,
       skipBeacon: true,
     },
     {
       target: ".tour-eleve-chat-modes",
-      content: "Tu peux choisir entre deux modes : 'Explique-moi le cours' ou 'Fais-moi réviser' (QCM).",
+      content: "Clique sur 'Fais-moi réviser' pour découvrir le mode QCM.",
+      hideFooter: true,
       skipBeacon: true,
     },
     {
@@ -137,8 +132,7 @@ export function AppTour({ identifiant }: AppTourProps) {
     {
       target: ".tour-eleve-chat-demo-start",
       content: "Regarde cette simulation pour voir comment l'IA fouille dans les documents du prof pour t'aider. Clique sur 'Lancer la simulation' !",
-      
-      
+      hideFooter: true,
       skipBeacon: true,
     },
     {
@@ -157,6 +151,34 @@ export function AppTour({ identifiant }: AppTourProps) {
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Allow clicking the target to advance the tour since spotlightClicks was removed in v3
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const currentStep = steps[stepIndex];
+      if (!currentStep || !currentStep.target) return;
+      
+      try {
+        const targetElement = typeof currentStep.target === 'string' 
+          ? document.querySelector(currentStep.target)
+          : null;
+          
+        if (targetElement && targetElement.contains(e.target as Node)) {
+          // If it's a link that changes the route, the route effect will handle it.
+          // But for state changes or just advancing, we do it here.
+          // Wait a tiny bit to let the React state update if it was a toggle
+          setTimeout(() => {
+            setStepIndex((prev) => prev + 1);
+          }, 50);
+        }
+      } catch (err) {
+        // ignore invalid selectors
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [stepIndex, steps]);
 
   // Listen for path changes to advance steps automatically
   useEffect(() => {

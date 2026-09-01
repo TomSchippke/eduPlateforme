@@ -124,7 +124,7 @@ export function GroupesList({ groupes }: { groupes: Groupe[] }) {
             <Link
               key={groupe.id}
               href={`/prof/groupes/${groupe.id}`}
-              className="card card-lift p-5 block tour-prof-group-card"
+              className={`card card-lift p-5 block tour-prof-group-card ${groupe.name.includes("Terminale") ? "tour-prof-group-card-terminale" : ""}`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">

@@ -19,6 +19,7 @@ import React from "react";
 
 // Simple markdown formatter for **bold** and *italic*
 function FormattedMessage({ content }: { content: string }) {
+  if (!content) return null;
   // Use a regex to split by both **...** and *...*
   // The capturing groups keep the delimiter in the result array
   const parts = content.split(/(\*\*[\s\S]*?\*\*|\*[\s\S]*?\*)/g);
