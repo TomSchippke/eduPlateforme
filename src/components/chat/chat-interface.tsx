@@ -406,7 +406,7 @@ export function ChatInterface({
       {showConfig && (
         <div className="card p-5 mb-4 space-y-4 animate-fade-in">
           {/* Mode toggle */}
-          <div>
+          <div className="tour-eleve-chat-modes">
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Mode
             </label>
@@ -461,7 +461,7 @@ export function ChatInterface({
 
           {/* DS selector for REVISE mode */}
           {mode === "REVISE" && selectedGroupe && (
-            <div className="space-y-4">
+            <div className="space-y-4 tour-eleve-chat-ds">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Scope prédéfini (DS)
@@ -823,7 +823,7 @@ export function ChatInterface({
                   }
                   disabled={quotaRemaining <= 0 || loading}
                   rows={1}
-                  className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none disabled:text-slate-400 max-h-32 rounded-xl"
+                  className="tour-eleve-chat-input w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none disabled:text-slate-400 max-h-32 rounded-xl"
                 />
 
                 {/* Toolbar inside input */}
@@ -841,7 +841,7 @@ export function ChatInterface({
                         onClick={() => fileInputRef.current?.click()}
                         disabled={quotaRemaining <= 0 || loading}
                         title="Joindre une image (1 par session)"
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                        className="tour-eleve-chat-image p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
                       >
                         <ImagePlus className="h-5 w-5" />
                       </button>
@@ -865,7 +865,7 @@ export function ChatInterface({
             <Button
               onClick={() => handleSend()}
               disabled={!canSend}
-              className="shrink-0 h-[46px] w-[46px] rounded-xl p-0"
+              className="tour-eleve-chat-rag shrink-0 h-[46px] w-[46px] rounded-xl p-0"
             >
               <Send className="h-4 w-4" />
             </Button>

@@ -54,6 +54,7 @@ export const authConfig: NextAuthConfig = {
     jwt({ token, user }) {
       if (user) {
         token.id = (user as { id: string }).id;
+        token.identifiant = (user as { identifiant: string }).identifiant;
         token.role = (user as { role: string }).role;
         token.tenantId = (user as { tenantId: string }).tenantId;
         token.firstName = (user as { firstName: string }).firstName;
@@ -64,6 +65,7 @@ export const authConfig: NextAuthConfig = {
     session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id as string;
+        (session.user as any).identifiant = token.identifiant as string;
         (session.user as any).role = token.role as string;
         (session.user as any).tenantId = token.tenantId as string;
         (session.user as any).firstName = token.firstName as string;
