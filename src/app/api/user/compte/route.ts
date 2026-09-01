@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     const updateData: any = {};
 
     if (passions && Array.isArray(passions)) {
-      updateData.passions = passions.slice(0, 3); // Max 3 passions
+      updateData.passions = passions.slice(0, 2); // Max 2 passions
     }
 
     if (title && ["M", "Mme", "M/Mme"].includes(title)) {

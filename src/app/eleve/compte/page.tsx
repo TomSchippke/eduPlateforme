@@ -47,7 +47,7 @@ export default function ComptePage() {
   };
 
   const handleAddPassion = () => {
-    if (newPassion.trim() && passions.length < 3 && !passions.includes(newPassion.trim())) {
+    if (newPassion.trim() && passions.length < 2 && !passions.includes(newPassion.trim())) {
       const updated = [...passions, newPassion.trim()];
       setNewPassion("");
       savePassions(updated);
@@ -149,7 +149,7 @@ export default function ComptePage() {
             Mes Centres d'Intérêt (Personnalisation de l'IA)
           </h2>
           <p className="text-sm text-slate-500 mb-4">
-            Ajoute jusqu'à 3 centres d'intérêt (ex: Football, Jeux Vidéo, Cuisine...).
+            Ajoute jusqu'à 2 centres d'intérêt (ex: Football, Jeux Vidéo, Cuisine...).
             L'IA utilisera ces informations pour créer des parallèles sur mesure afin de mieux t'expliquer une notion!
           </p>
 
@@ -162,9 +162,9 @@ export default function ComptePage() {
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddPassion())}
                 placeholder="Ajouter un centre d'intérêt..."
                 className="flex-1 border-slate-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                disabled={passions.length >= 3 || savingPassions}
+                disabled={passions.length >= 2 || savingPassions}
               />
-              <Button type="button" onClick={handleAddPassion} disabled={passions.length >= 3 || !newPassion.trim() || savingPassions}>
+              <Button type="button" onClick={handleAddPassion} disabled={passions.length >= 2 || !newPassion.trim() || savingPassions}>
                 <Plus className="h-4 w-4 mr-2" /> Ajouter
               </Button>
             </div>
@@ -181,8 +181,8 @@ export default function ComptePage() {
                 ))}
               </div>
             )}
-            {passions.length === 3 && (
-              <p className="text-xs text-amber-600 font-medium">Nombre maximum de centres d'intérêts atteint (3/3).</p>
+            {passions.length === 2 && (
+              <p className="text-xs text-amber-600 font-medium">Nombre maximum de centres d'intérêts atteint (2/2).</p>
             )}
           </div>
         </div>
