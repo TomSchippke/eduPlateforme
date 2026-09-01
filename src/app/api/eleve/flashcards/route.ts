@@ -19,7 +19,23 @@ export async function GET() {
       orderBy: { createdAt: "desc" }
     });
 
-    return NextResponse.json(flashcards);
+    const memberships = await prisma.groupeMembership.findMany({
+      where: { 
+        eleveId: user.id,
+        groupe: { isArchived: false }
+      },
+      include: {
+        groupe: {
+          select: { id: true, name: true }
+        }
+      }
+    });
+
+    const groupes = memberships
+      .filter((m) => m.groupe)
+      .map((m) => m.groupe);
+
+    return NextResponse.json({ flashcards, groupes });
   } catch (error) {
     console.error("Flashcards GET error:", error);
     return new NextResponse("Internal Error", { status: 500 });

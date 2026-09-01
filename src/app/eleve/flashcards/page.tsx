@@ -3,16 +3,25 @@
 import { useEffect, useState } from "react";
 import { Sparkles, Brain, ArrowRight, ArrowLeft, FlipHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Flashcard {
   id: string;
   question: string;
   reponse: string;
+  groupeId?: string | null;
   chapitre?: { title: string } | null;
 }
 
+interface Groupe {
+  id: string;
+  name: string;
+}
+
 export default function FlashcardsPage() {
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [allFlashcards, setAllFlashcards] = useState<Flashcard[]>([]);
+  const [groupes, setGroupes] = useState<Groupe[]>([]);
+  const [selectedGroupe, setSelectedGroupe] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -21,7 +30,11 @@ export default function FlashcardsPage() {
     fetch("/api/eleve/flashcards")
       .then(res => res.json())
       .then(data => {
-        setFlashcards(data);
+        setAllFlashcards(data.flashcards);
+        setGroupes(data.groupes);
+        if (data.groupes && data.groupes.length > 0) {
+          setSelectedGroupe(data.groupes[0].id);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -57,14 +70,14 @@ export default function FlashcardsPage() {
       });
       if (!res.ok) throw new Error("Erreur lors de la suppression");
       
-      const newFlashcards = [...flashcards];
-      newFlashcards.splice(currentIndex, 1);
+      const newAllFlashcards = allFlashcards.filter(f => f.id !== flashcards[currentIndex].id);
       
       setIsFlipped(false);
       setTimeout(() => {
-        setFlashcards(newFlashcards);
-        if (currentIndex >= newFlashcards.length) {
-          setCurrentIndex(Math.max(0, newFlashcards.length - 1));
+        setAllFlashcards(newAllFlashcards);
+        const filteredCount = newAllFlashcards.filter(f => !selectedGroupe || f.groupeId === selectedGroupe).length;
+        if (currentIndex >= filteredCount) {
+          setCurrentIndex(Math.max(0, filteredCount - 1));
         }
         setIsDeleting(false);
       }, 150);
@@ -78,6 +91,10 @@ export default function FlashcardsPage() {
   const handleFlip = () => {
     if (!isDeleting) setIsFlipped(!isFlipped);
   };
+
+  const flashcards = allFlashcards.filter(
+    (f) => !selectedGroupe || f.groupeId === selectedGroupe
+  );
 
   if (loading) {
     return <div className="p-8 text-center text-slate-500">Chargement...</div>;
@@ -94,6 +111,27 @@ export default function FlashcardsPage() {
           Créées automatiquement lors de tes révisions pour t'aider à mémoriser tes faiblesses.
         </p>
       </div>
+
+      {groupes.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 shrink-0 justify-center">
+          {groupes.map((g) => (
+            <Badge
+              key={g.id}
+              variant={selectedGroupe === g.id ? "info" : "outline"}
+              size="md"
+              className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
+              onClick={() => {
+                if (selectedGroupe === g.id) return;
+                setSelectedGroupe(g.id);
+                setCurrentIndex(0);
+                setIsFlipped(false);
+              }}
+            >
+              {g.name}
+            </Badge>
+          ))}
+        </div>
+      )}
 
       {flashcards.length === 0 ? (
         <div className="card p-12 text-center text-slate-500">

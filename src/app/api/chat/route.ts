@@ -492,6 +492,7 @@ export async function POST(request: Request) {
               await prisma.flashcard.create({
                 data: {
                   eleveId: user.id,
+                  groupeId: conversation.groupeId,
                   chapitreId: conversation.currentChapterId,
                   question: data.correction.flashcard_a_creer.question,
                   reponse: data.correction.flashcard_a_creer.reponse,

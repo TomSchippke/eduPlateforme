@@ -91,6 +91,7 @@ model Groupe {
   coursTemplates CoursTemplate[]
   datesDS        DateDS[]
   conversations  Conversation[]
+  flashcards     Flashcard[]
 
   focusConcepts String[] @default([])
   availableTags String[] @default(["Unité", "Cours", "Calcul", "Lecture d'énoncé"])
@@ -381,15 +382,18 @@ model StudentMistakeLog {
 model Flashcard {
   id         String   @id @default(cuid())
   eleveId    String   @map("eleve_id")
+  groupeId   String?  @map("groupe_id")
   chapitreId String?  @map("chapitre_id")
   question   String
   reponse    String
   createdAt  DateTime @default(now()) @map("created_at")
 
   eleve      User       @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  groupe     Groupe?    @relation(fields: [groupeId], references: [id], onDelete: Cascade)
   chapitre   Chapitre?  @relation(fields: [chapitreId], references: [id], onDelete: SetNull)
 
   @@index([eleveId])
+  @@index([groupeId])
   @@index([chapitreId])
   @@map("flashcards")
 }

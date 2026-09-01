@@ -357,6 +357,7 @@ export function ChatInterface({
                 setConversationId(null);
                 setHasUsedImage(false);
                 setSelectedImage(null);
+                setShowConfig(true);
               }}
             >
               {g.name}
