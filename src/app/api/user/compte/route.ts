@@ -11,7 +11,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { identifiant: true, passions: true }
+    select: { identifiant: true, passions: true, title: true }
   });
 
   if (!user) {
@@ -28,11 +28,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { passions, password } = await req.json();
+    const { passions, password, title } = await req.json();
     const updateData: any = {};
 
     if (passions && Array.isArray(passions)) {
       updateData.passions = passions.slice(0, 3); // Max 3 passions
+    }
+
+    if (title && ["M", "Mme", "M/Mme"].includes(title)) {
+      updateData.title = title;
     }
 
     if (password && password.length >= 4) {

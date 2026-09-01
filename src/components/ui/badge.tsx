@@ -5,9 +5,10 @@ interface BadgeProps {
   variant?: "default" | "success" | "warning" | "danger" | "info" | "outline";
   size?: "sm" | "md";
   className?: string;
+  onClick?: () => void;
 }
 
-export function Badge({ children, variant = "default", size = "sm", className }: BadgeProps) {
+export function Badge({ children, variant = "default", size = "sm", className, onClick }: BadgeProps) {
   const variants = {
     default: "bg-slate-100 text-slate-700",
     success: "bg-emerald-100 text-emerald-700",
@@ -30,6 +31,7 @@ export function Badge({ children, variant = "default", size = "sm", className }:
         sizes[size],
         className
       )}
+      onClick={onClick}
     >
       {children}
     </span>

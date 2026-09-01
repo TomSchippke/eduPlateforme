@@ -276,7 +276,7 @@ export function ChatInterface({
     } finally {
       setLoading(false);
     }
-  }, [canSend, selectedGroupe, input, mode, selectedChapitre, selectedDS, conversationId, difficultyMode, selectedChapitresRevise]);
+  }, [canSend, selectedGroupe, input, mode, selectedChapitre, selectedDS, conversationId, difficultyMode, selectedChapitresRevise, selectedImage, hasUsedImage, exerciseTypes, selectedKeyword]);
 
   function handleNewConversation() {
     setMessages([]);
@@ -339,6 +339,32 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-6.5rem)]">
+      {/* Group selector (at top of page) */}
+      {groupes.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 shrink-0">
+          {groupes.map((g) => (
+            <Badge
+              key={g.id}
+              variant={selectedGroupe?.id === g.id ? "info" : "outline"}
+              size="md"
+              className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
+              onClick={() => {
+                if (selectedGroupe?.id === g.id) return;
+                setSelectedGroupe(g);
+                setSelectedChapitre("");
+                setSelectedDS("");
+                setMessages([]);
+                setConversationId(null);
+                setHasUsedImage(false);
+                setSelectedImage(null);
+              }}
+            >
+              {g.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -409,30 +435,7 @@ export function ChatInterface({
             </div>
           </div>
 
-          {/* Group selector */}
-          {groupes.length > 1 && (
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Groupe
-              </label>
-              <select
-                value={selectedGroupe?.id || ""}
-                onChange={(e) => {
-                  const g = groupes.find((g) => g.id === e.target.value);
-                  setSelectedGroupe(g || null);
-                  setSelectedChapitre("");
-                  setSelectedDS("");
-                }}
-                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-blue-500"
-              >
-                {groupes.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+
 
           {/* Chapter selector for EXPLIQUE mode */}
           {mode === "EXPLIQUE" && selectedGroupe && (
@@ -538,8 +541,8 @@ export function ChatInterface({
                         }
                       }}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${exerciseTypes.includes(type.id)
-                          ? "bg-indigo-50 border-indigo-200 text-indigo-700"
-                          : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                         }`}
                     >
                       {type.label}
@@ -685,16 +688,16 @@ export function ChatInterface({
                 Je ne comprends pas l'exercice 1 question 2
               </button>
               <button
-                onClick={() => handleSend("Je ne comprends pas la notion de période")}
-                className="text-left text-sm bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 shadow-sm"
-              >
-                Je ne comprends pas la notion de période
-              </button>
-              <button
                 onClick={() => handleSend("Je n'ai pas compris la formule de l'énergie cinétique dans le cours")}
                 className="text-left text-sm bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 shadow-sm"
               >
                 Je n'ai pas compris la formule de l'énergie cinétique dans le cours
+              </button>
+              <button
+                onClick={() => handleSend("Est ce que je suis bien partis sur cette exercice ? (insérer photo)")}
+                className="text-left text-sm bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 px-3 py-2 rounded-xl transition-colors border border-slate-200 hover:border-blue-200 shadow-sm"
+              >
+                Est ce que je suis bien partis sur cette exercice ? (insérer photo)
               </button>
             </div>
           </div>
@@ -729,7 +732,7 @@ export function ChatInterface({
           </div>
         </div>
       )}
-      
+
       {/* Quota warning */}
       {quotaRemaining <= 0 && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-3">
@@ -766,7 +769,7 @@ export function ChatInterface({
           {selectedImage && (
             <div className="relative inline-block mb-3 ml-2">
               <img src={selectedImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
-              <button 
+              <button
                 onClick={() => setSelectedImage(null)}
                 className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow border border-slate-200 text-slate-500 hover:text-red-500"
               >
@@ -803,59 +806,59 @@ export function ChatInterface({
 
           <div className="flex items-end gap-2">
             <div className="flex-1 relative bg-white border border-slate-300 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
-              
+
               <div className="flex flex-col w-full">
                 <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  quotaRemaining <= 0
-                    ? "Quota épuisé pour aujourd'hui"
-                    : mode === "EXPLIQUE"
-                      ? "Pose ta question sur le cours..."
-                      : "Ta réponse..."
-                }
-                disabled={quotaRemaining <= 0 || loading}
-                rows={1}
-                className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none disabled:text-slate-400 max-h-32 rounded-xl"
-              />
-              
-              {/* Toolbar inside input */}
-              <div className="flex items-center justify-between px-2 pb-2">
-                <div className="flex items-center">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleImageSelect}
-                  />
-                  {mode === "EXPLIQUE" && !hasUsedImage && (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={quotaRemaining <= 0 || loading}
-                      title="Joindre une image (1 par session)"
-                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <ImagePlus className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-                {/* Word counter */}
-                <div
-                  className={`text-xs px-1.5 py-0.5 rounded ${isOverLimit
-                    ? "text-red-600 bg-red-50 font-medium"
-                    : wordCount > MAX_WORDS * 0.8
-                      ? "text-amber-600"
-                      : "text-slate-400"
-                    }`}
-                >
-                  {wordCount}/{MAX_WORDS}
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    quotaRemaining <= 0
+                      ? "Quota épuisé pour aujourd'hui"
+                      : mode === "EXPLIQUE"
+                        ? "Pose ta question sur le cours..."
+                        : "Ta réponse..."
+                  }
+                  disabled={quotaRemaining <= 0 || loading}
+                  rows={1}
+                  className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none disabled:text-slate-400 max-h-32 rounded-xl"
+                />
+
+                {/* Toolbar inside input */}
+                <div className="flex items-center justify-between px-2 pb-2">
+                  <div className="flex items-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleImageSelect}
+                    />
+                    {mode === "EXPLIQUE" && !hasUsedImage && (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={quotaRemaining <= 0 || loading}
+                        title="Joindre une image (1 par session)"
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <ImagePlus className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                  {/* Word counter */}
+                  <div
+                    className={`text-xs px-1.5 py-0.5 rounded ${isOverLimit
+                      ? "text-red-600 bg-red-50 font-medium"
+                      : wordCount > MAX_WORDS * 0.8
+                        ? "text-amber-600"
+                        : "text-slate-400"
+                      }`}
+                  >
+                    {wordCount}/{MAX_WORDS}
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
 
             <Button
