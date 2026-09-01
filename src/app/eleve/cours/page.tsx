@@ -118,7 +118,7 @@ export default async function CoursPage(props: { searchParams: Promise<{ groupeI
                           href={doc.storageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="tour-eleve-download-doc flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors ml-11"
+                          className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-blue-50 transition-colors ml-11"
                         >
                           <FileText className="h-4 w-4 text-slate-400" />
                           <div className="flex-1 min-w-0">

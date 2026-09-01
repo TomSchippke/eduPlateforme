@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { EleveHeader } from "@/components/layout/eleve-header";
-import { AppTour } from "@/components/tutorial/app-tour";
 
 export default async function EleveLayout({
   children,
@@ -14,7 +13,7 @@ export default async function EleveLayout({
     redirect("/login");
   }
 
-  const user = session.user as { role?: string; firstName?: string; lastName?: string; identifiant?: string };
+  const user = session.user as { role?: string; firstName?: string; lastName?: string };
 
   if (user.role !== "ELEVE") {
     redirect("/prof/dashboard");
@@ -28,7 +27,6 @@ export default async function EleveLayout({
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-6">
         {children}
       </main>
-      {user.identifiant && <AppTour identifiant={user.identifiant} />}
     </div>
   );
 }

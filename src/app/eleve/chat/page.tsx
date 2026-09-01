@@ -84,7 +84,6 @@ export default async function ChatPage() {
       quotaRemaining={remaining}
       quotaMax={quota.chatsMax + quota.bonusChats}
       userId={user.id}
-      identifiant={(session.user as any).identifiant}
     />
   );
 }
