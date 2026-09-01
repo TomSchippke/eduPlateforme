@@ -344,7 +344,7 @@ export async function POST(request: Request) {
     // Build prompt
     let systemPrompt: string;
     if (mode === "EXPLIQUE") {
-      systemPrompt = getExpliqueMoiPrompt(context, groupeName, teacherNote, focusConcepts, availableTags, passions);
+      systemPrompt = getExpliqueMoiPrompt(context, groupeName, teacherNote, focusConcepts, availableTags, passions, !!image);
     } else {
       systemPrompt = getReviseMoiPrompt(
         context,
