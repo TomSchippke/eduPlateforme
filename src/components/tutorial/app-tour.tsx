@@ -156,7 +156,8 @@ export function AppTour({ identifiant }: AppTourProps) {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const currentStep = steps[stepIndex];
-      if (!currentStep || !currentStep.target) return;
+      if (!currentStep || !currentStep.target || !currentStep.hideFooter) return;
+      if (currentStep.target === '.tour-eleve-chat-demo-start') return; // Handled internally by simulation
       
       try {
         const targetElement = typeof currentStep.target === 'string' 
