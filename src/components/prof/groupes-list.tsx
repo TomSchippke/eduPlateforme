@@ -28,9 +28,8 @@ interface Groupe {
   };
 }
 
-export function GroupesList({ groupes: initialGroupes }: { groupes: Groupe[] }) {
+export function GroupesList({ groupes }: { groupes: Groupe[] }) {
   const router = useRouter();
-  const [groupes] = useState(initialGroupes);
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [schoolYear, setSchoolYear] = useState(getCurrentSchoolYear());

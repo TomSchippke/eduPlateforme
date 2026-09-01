@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const body = await request.json();
   const parsed = z.object({
@@ -38,10 +38,15 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const groupes = await prisma.groupe.findMany({
-    where: { profId: user.id },
+    where: {
+      OR: [
+        { profId: user.id },
+        { memberships: { some: { eleveId: user.id } } }
+      ]
+    },
     include: { _count: { select: { memberships: true, chapitres: true } } },
     orderBy: [{ isArchived: "asc" }, { createdAt: "desc" }],
   });

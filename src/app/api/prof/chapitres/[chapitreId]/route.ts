@@ -7,7 +7,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ chapi
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { chapitreId } = await context.params;
 
@@ -51,7 +51,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ chap
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { chapitreId } = await context.params;
 

@@ -7,10 +7,16 @@ export default async function RentreePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const user = session.user as { tenantId: string };
+  const user = session.user as { id: string; tenantId: string; role: string };
 
   const groupes = await prisma.groupe.findMany({
-    where: { profId: user.tenantId, isArchived: false },
+    where: { 
+      isArchived: false,
+      OR: [
+        { profId: user.id },
+        { memberships: { some: { eleveId: user.id } } }
+      ]
+    },
     include: { _count: { select: { memberships: true, chapitres: true } } },
     orderBy: { name: "asc" },
   });

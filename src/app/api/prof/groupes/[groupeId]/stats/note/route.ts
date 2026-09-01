@@ -15,7 +15,7 @@ export async function POST(
     role: string;
   };
   
-  if (user.role !== "PROF") {
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 

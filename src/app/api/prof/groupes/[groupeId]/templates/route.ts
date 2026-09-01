@@ -12,7 +12,7 @@ export async function GET(
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { groupeId } = await params;
 
@@ -35,7 +35,7 @@ export async function POST(
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { groupeId } = await params;
 

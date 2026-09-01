@@ -7,7 +7,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ group
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { groupeId } = await context.params;
 
@@ -48,14 +48,20 @@ export async function DELETE(request: Request, context: { params: Promise<{ grou
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const user = session.user as { tenantId: string; role: string; id: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { groupeId } = await context.params;
 
   try {
-    // Verifier que le groupe appartient bien au prof
-    const groupe = await prisma.groupe.findUnique({
-      where: { id: groupeId },
+    // Verify ownership or membership
+    const groupe = await prisma.groupe.findFirst({
+      where: { 
+        id: groupeId, 
+        OR: [
+          { profId: user.id },
+          { memberships: { some: { eleveId: user.id } } }
+        ]
+      },
     });
 
     if (!groupe || groupe.profId !== user.id) {

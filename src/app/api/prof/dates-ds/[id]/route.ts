@@ -15,7 +15,7 @@ export async function DELETE(
   const { id } = await params;
   const user = session.user as { tenantId: string; role: string; id: string };
 
-  if (user.role !== "PROF") {
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
@@ -53,7 +53,7 @@ export async function PATCH(
   const { id } = await params;
   const user = session.user as { tenantId: string; role: string; id: string };
 
-  if (user.role !== "PROF") {
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 

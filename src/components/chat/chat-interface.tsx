@@ -189,16 +189,19 @@ export function ChatInterface({
     if (!messageContent.trim() || !selectedGroupe) return;
     if (!overrideMessage && !canSend) return;
 
+    const imageToSend = selectedImage;
+    if (!overrideMessage) setInput("");
+    setSelectedImage(null); // Clear immediately for UX
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: messageContent.trim(),
       createdAt: new Date().toISOString(),
-      hasImage: !!selectedImage && !hasUsedImage && mode === "EXPLIQUE",
+      hasImage: !!imageToSend && !hasUsedImage && mode === "EXPLIQUE",
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    if (!overrideMessage) setInput("");
     setLoading(true);
     setShowConfig(false);
 
@@ -214,8 +217,8 @@ export function ChatInterface({
         if (selectedChapitre) {
           body.chapitreId = selectedChapitre;
         }
-        if (selectedImage && !hasUsedImage) {
-          body.image = selectedImage;
+        if (imageToSend && !hasUsedImage) {
+          body.image = imageToSend;
         }
       } else if (mode === "REVISE") {
         body.difficultyMode = difficultyMode;
@@ -243,10 +246,9 @@ export function ChatInterface({
 
       const data = await res.json();
 
-      if (mode === "EXPLIQUE" && selectedImage && !hasUsedImage) {
+      if (mode === "EXPLIQUE" && imageToSend && !hasUsedImage) {
         setHasUsedImage(true);
       }
-      setSelectedImage(null);
 
       // Save conversation ID for subsequent messages
       if (data.conversationId) {
@@ -336,7 +338,7 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-5rem)]">
+    <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-6.5rem)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -648,6 +650,12 @@ export function ChatInterface({
                 : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm"
                 }`}
             >
+              {message.hasImage && (
+                <div className="flex items-center gap-1 text-xs bg-indigo-500/20 text-indigo-100 w-fit px-2 py-1 rounded mb-2">
+                  <ImagePlus className="h-3 w-3" />
+                  <span>Document joint</span>
+                </div>
+              )}
               <div className="prose prose-sm prose-slate max-w-none break-words whitespace-pre-wrap">
                 <FormattedMessage content={message.content} />
               </div>

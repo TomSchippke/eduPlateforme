@@ -7,10 +7,15 @@ export default async function GroupesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const user = session.user as { tenantId: string };
+  const user = session.user as { id: string; tenantId: string; role: string };
 
   const groupes = await prisma.groupe.findMany({
-    where: { profId: user.tenantId },
+    where: {
+      OR: [
+        { profId: user.id },
+        { memberships: { some: { eleveId: user.id } } }
+      ]
+    },
     include: {
       _count: { select: { memberships: true, chapitres: true } },
     },

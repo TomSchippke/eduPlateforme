@@ -7,11 +7,18 @@ export default async function ProfEDTPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const user = session.user as { tenantId: string };
+  const user = session.user as { id: string; tenantId: string; role: string };
 
+  // Fetch all cours for this professor (either they created the group or are a member)
   const cours = await prisma.coursPlanifie.findMany({
     where: {
-      groupe: { profId: user.tenantId, isArchived: false },
+      groupe: {
+        isArchived: false,
+        OR: [
+          { profId: user.id },
+          { memberships: { some: { eleveId: user.id } } }
+        ]
+      },
       dateTime: { gte: new Date() },
     },
     include: { groupe: { select: { name: true } } },

@@ -11,11 +11,17 @@ export default async function GroupeDetailPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const user = session.user as { tenantId: string };
+  const user = session.user as { id: string; tenantId: string; role: string };
   const { groupeId } = await params;
 
   const groupe = await prisma.groupe.findFirst({
-    where: { id: groupeId, profId: user.tenantId },
+    where: { 
+      id: groupeId, 
+      OR: [
+        { profId: user.id },
+        { memberships: { some: { eleveId: user.id } } }
+      ]
+    },
     include: {
       chapitres: {
         orderBy: { order: "asc" },
@@ -71,7 +77,12 @@ export default async function GroupeDetailPage({
 
   // Get all students for this tenant (for the add student picker)
   const allEleves = await prisma.user.findMany({
-    where: { tenantId: user.tenantId, role: "ELEVE", isActive: true },
+    where: { 
+      tenantId: user.tenantId, 
+      role: { in: ["ELEVE", "PROF"] }, 
+      isActive: true,
+      id: { not: user.id }
+    },
     select: { id: true, firstName: true, lastName: true, identifiant: true },
     orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
   });
