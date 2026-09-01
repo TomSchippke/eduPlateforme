@@ -230,7 +230,7 @@ export function ChatInterface({
     setMessages(prev => [...prev, {
       id: (Date.now() + 3).toString(),
       role: "assistant",
-      content: "Presque ! N'oublie pas que dans la formule $E_c = \frac{1}{2}mv^2$, la vitesse doit être en **mètres par seconde (m/s)** et non en km/h. Essaie de convertir 130 km/h en m/s d'abord."
+      content: "Presque ! N'oublie pas que dans la formule $E_c = \\frac{1}{2}mv^2$, la vitesse doit être en **mètres par seconde (m/s)** et non en km/h. Essaie de convertir 130 km/h en m/s d'abord."
     }]);
     
     // Step 5: Advance Joyride if exists

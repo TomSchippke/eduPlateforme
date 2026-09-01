@@ -788,7 +788,7 @@ function ChapitresTab({
                 {chapitre.documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex flex-col gap-2 p-3 rounded-lg bg-slate-50"
+                    className="tour-prof-doc-item flex flex-col gap-2 p-3 rounded-lg bg-slate-50"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -804,7 +804,7 @@ function ChapitresTab({
                         <StatusBadge status={doc.indexStatus as "PENDING" | "PROCESSING" | "INDEXED" | "ERROR"} />
                         <button
                           onClick={() => onEditDoc(doc)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="tour-prof-edit-doc p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                           title="Modifier"
                         >
                           <Pencil className="h-4 w-4" />

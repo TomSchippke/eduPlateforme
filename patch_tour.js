@@ -1,163 +1,144 @@
-"use client";
+const fs = require('fs');
+const file = 'src/components/tutorial/app-tour.tsx';
+let content = fs.readFileSync(file, 'utf8');
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Joyride, STATUS, Step } from "react-joyride";
-import { signOut } from "next-auth/react";
-
-interface AppTourProps {
-  identifiant: string;
-}
-
-export function AppTour({ identifiant }: AppTourProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [run, setRun] = useState(false);
-  const [stepIndex, setStepIndex] = useState(0);
-
-  // If we are not a demo user, don't run anything.
-  if (identifiant !== "p.prof" && identifiant !== "e.eleve") {
-    return null;
-  }
-
-  const profSteps: any[] = [
+const profSteps = `
+  const profSteps: Step[] = [
     {
       target: "body",
       placement: "center",
       content: "Bienvenue sur le compte de démonstration Professeur ! Faisons un tour rapide des fonctionnalités.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: "nav a[href='/prof/groupes']",
       content: "Les groupes sont le cœur de la plateforme. Cliquez sur 'Mes Groupes' pour continuer.",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-create-group",
       content: "Ici vous pouvez créer vos classes. Pour la démo, nous avons pré-généré 2 groupes.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-group-card",
       content: "Cliquez sur 'Terminale Spé Maths' pour voir les détails d'un groupe.",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-doc-item",
       content: "Voici les documents que vous avez partagés (PDF, DOCX). L'IA les lira automatiquement pour aider les élèves.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-add-doc",
       content: "C'est ici que vous uploadez de nouveaux cours et TD.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-edit-doc",
       content: "Vous pouvez modifier ou supprimer un document à tout moment.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-add-ds",
       content: "Planifiez des DS. L'IA générera des révisions ciblées pour les élèves à l'approche de cette date.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-prof-stats",
       content: "Cet onglet rassemble toutes les statistiques du groupe (erreurs fréquentes, notions mal comprises).",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: "nav a[href='/prof/edt']",
       content: "L'emploi du temps permet de planifier les séances. Cliquez pour le découvrir !",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: "body",
       placement: "center",
       content: "C'est la fin du tutoriel Professeur ! Vous allez être déconnecté.",
-      skipBeacon: true,
+      disableBeacon: true,
     }
   ];
+`;
 
-  const eleveSteps: any[] = [
+const eleveSteps = `
+  const eleveSteps: Step[] = [
     {
       target: "body",
       placement: "center",
       content: "Bienvenue sur le compte de démonstration Élève ! Découvrons ce que l'IA peut faire pour toi.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: "nav a[href='/eleve/cours']",
       content: "Ici tu retrouves tous les documents fournis par ton professeur. Clique dessus pour y accéder.",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-eleve-download-doc",
       content: "Tu peux télécharger et consulter le cours ou le TD de ton professeur ici.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: "nav a[href='/eleve/edt']",
       content: "Découvre ton emploi du temps ! Clique ici.",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: "nav a[href='/eleve/chat']",
       content: "Allons voir l'assistant IA, le cœur de la plateforme ! Clique sur le Chat.",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-eleve-chat-modes",
       content: "Tu peux choisir entre deux modes : 'Explique-moi le cours' ou 'Fais-moi réviser' (QCM).",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-eleve-chat-ds",
       content: "En mode révision, tu peux cibler un DS à venir. L'IA générera des questions adaptées.",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-eleve-chat-image",
       content: "Tu peux envoyer une photo de ton brouillon. L'IA est capable de lire ton écriture et de corriger tes erreurs !",
-      skipBeacon: true,
+      disableBeacon: true,
     },
     {
       target: ".tour-eleve-chat-demo-start",
       content: "Regarde cette simulation pour voir comment l'IA fouille dans les documents du prof pour t'aider. Clique sur 'Lancer la simulation' !",
-      
-      
-      skipBeacon: true,
+      spotlightClicks: true,
+      hideNextButton: true,
+      disableBeacon: true,
     },
     {
       target: "body",
       placement: "center",
       content: "C'est la fin de la démonstration Élève. Fin de session !",
-      skipBeacon: true,
+      disableBeacon: true,
     }
   ];
+`;
 
-  const steps = identifiant === "p.prof" ? profSteps : eleveSteps;
+content = content.replace(/const profSteps: Step\[\] = \[([\s\S]*?)\];/g, profSteps.trim());
+content = content.replace(/const eleveSteps: Step\[\] = \[([\s\S]*?)\];/g, eleveSteps.trim());
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRun(true);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
+const useEffects = `
   // Listen for path changes to advance steps automatically
   useEffect(() => {
     if (identifiant === "p.prof") {
@@ -172,39 +153,8 @@ export function AppTour({ identifiant }: AppTourProps) {
       if (stepIndex === 4 && pathname === "/eleve/chat") setStepIndex(5);
     }
   }, [pathname, stepIndex, identifiant]);
+`;
 
-  // Expose a global method to advance the tour from external components (like Chat Simulator finishing)
-  useEffect(() => {
-    (window as any).__advanceTour = () => {
-      setStepIndex((prev) => prev + 1);
-    };
-    return () => {
-      delete (window as any).__advanceTour;
-    };
-  }, []);
+content = content.replace(/\/\/ Listen for path changes to advance steps automatically[\s\S]*?}, \[pathname, stepIndex, identifiant\]\);/g, useEffects.trim());
 
-  const handleJoyrideCallback = (data: any) => {
-    const { action, index, status, type } = data;
-
-    if (type === "step:after" && action === "next") {
-      setStepIndex(index + 1);
-    } else if (type === "step:after" && action === "prev") {
-      setStepIndex(index - 1);
-    }
-
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      setRun(false);
-      signOut({ callbackUrl: "/login" });
-    }
-  };
-
-  return (
-    <Joyride
-      steps={steps}
-      run={run}
-      stepIndex={stepIndex}
-      onEvent={handleJoyrideCallback}
-      continuous
-    />
-  );
-}
+fs.writeFileSync(file, content);
