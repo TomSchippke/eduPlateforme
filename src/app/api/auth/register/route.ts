@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
         lastName,
         identifiant,
         passwordHash,
-        role: "PROF_PRINCIPAL",
+        role: Role.PROF_PRINCIPAL,
         tenantId: "temp", // Will update after creation
       },
     });
