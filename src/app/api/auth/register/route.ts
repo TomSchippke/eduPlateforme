@@ -45,7 +45,7 @@ export async function POST(request: Request) {
         lastName,
         identifiant,
         passwordHash,
-        role: "PROF",
+        role: "PROF_PRINCIPAL",
         tenantId: "temp", // Will update after creation
       },
     });

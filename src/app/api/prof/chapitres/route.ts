@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   // Verify groupe belongs to this tenant
   const groupe = await prisma.groupe.findFirst({
-    where: { id: parsed.data.groupeId, profId: user.tenantId },
+    where: { id: parsed.data.groupeId, profId: user.id },
   });
 
   if (!groupe) {

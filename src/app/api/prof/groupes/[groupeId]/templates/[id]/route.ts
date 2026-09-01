@@ -19,7 +19,7 @@ export async function DELETE(
     include: { groupe: true }
   });
 
-  if (!template || template.groupe.profId !== user.tenantId) {
+  if (!template || template.groupe.profId !== user.id) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 

@@ -12,7 +12,7 @@ export async function GET() {
   if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const holidays = await prisma.schoolHoliday.findMany({
-    where: { profId: user.tenantId },
+    where: { profId: user.id },
     orderBy: { startDate: "asc" },
   });
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
   const holiday = await prisma.schoolHoliday.create({
     data: {
-      profId: user.tenantId,
+      profId: user.id,
       name,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   });
 
   // Regenerate schedules since holidays changed
-  await regenerateAllSchedules(user.tenantId);
+  await regenerateAllSchedules(user.id);
 
   return NextResponse.json(holiday, { status: 201 });
 }

@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   // Verify all groups belong to this tenant
   const groupes = await prisma.groupe.findMany({
-    where: { id: { in: groupeIds }, profId: user.tenantId, isArchived: false },
+    where: { id: { in: groupeIds }, profId: user.id, isArchived: false },
     include: {
       chapitres: { orderBy: { order: "asc" }, select: { title: true, order: true } },
     },
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Create new group with copied chapters
     await prisma.groupe.create({
       data: {
-        profId: user.tenantId,
+        profId: user.id,
         name: groupe.name,
         schoolYear: newSchoolYear,
         chapitres: {

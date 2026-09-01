@@ -19,7 +19,7 @@ export async function DELETE(
     include: { groupe: { select: { profId: true } } },
   });
 
-  if (!membership || membership.groupe.profId !== user.tenantId) {
+  if (!membership || membership.groupe.profId !== user.id) {
     return NextResponse.json({ error: "Non trouvé" }, { status: 404 });
   }
 

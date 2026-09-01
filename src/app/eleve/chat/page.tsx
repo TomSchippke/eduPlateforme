@@ -18,6 +18,7 @@ export default async function ChatPage() {
     include: {
       groupe: {
         include: {
+          prof: { select: { lastName: true } },
           chapitres: {
             orderBy: { order: "asc" },
             select: { id: true, title: true, focusConcepts: true },
@@ -40,7 +41,7 @@ export default async function ChatPage() {
     .filter((m) => m.groupe)
     .map((m) => ({
       id: m.groupe.id,
-      name: m.groupe.name,
+      name: `${m.groupe.name} - M/Mme ${m.groupe.prof.lastName}`,
       chapitres: m.groupe.chapitres,
       datesDS: m.groupe.datesDS.map((ds) => ({
         id: ds.id,

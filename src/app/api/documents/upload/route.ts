@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const chapitre = await prisma.chapitre.findFirst({
       where: {
         id: chapitreId,
-        groupe: { profId: user.tenantId },
+        groupe: { profId: user.id },
       },
     });
 

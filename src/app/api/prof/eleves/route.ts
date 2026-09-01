@@ -9,8 +9,8 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const user = session.user as { tenantId: string; role: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  const user = session.user as { tenantId: string; role: string; id: string };
+  if (user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const body = await request.json();
   const parsed = z.object({
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   // Verify groupes belong to this tenant
   if (groupeIds && groupeIds.length > 0) {
     const validGroupes = await prisma.groupe.count({
-      where: { id: { in: groupeIds }, profId: user.tenantId },
+      where: { id: { in: groupeIds }, profId: user.id },
     });
     if (validGroupes !== groupeIds.length) {
       return NextResponse.json({ error: "Groupe(s) invalide(s)" }, { status: 400 });
@@ -74,7 +74,7 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const user = session.user as { tenantId: string; role: string };
-  if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const eleves = await prisma.user.findMany({
     where: { tenantId: user.tenantId, role: "ELEVE" },

@@ -7,7 +7,11 @@ export default async function ElevesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const user = session.user as { tenantId: string };
+  const user = session.user as { tenantId: string; role: string; id: string };
+
+  if (user.role !== "PROF_PRINCIPAL") {
+    redirect("/prof/dashboard");
+  }
 
   const [eleves, groupes] = await Promise.all([
     prisma.user.findMany({
@@ -20,7 +24,7 @@ export default async function ElevesPage() {
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
     prisma.groupe.findMany({
-      where: { profId: user.tenantId, isArchived: false },
+      where: { profId: user.id, isArchived: false },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),

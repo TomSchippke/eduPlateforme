@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
   const groupe = await prisma.groupe.findFirst({
-    where: { id: parsed.data.groupeId, profId: user.tenantId },
+    where: { id: parsed.data.groupeId, profId: user.id },
   });
   if (!groupe) return NextResponse.json({ error: "Groupe non trouvé" }, { status: 404 });
 

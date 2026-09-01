@@ -17,7 +17,7 @@ export async function GET(
 
     // Check permissions
     const groupe = await prisma.groupe.findFirst({
-      where: { id: groupeId, profId: user.tenantId },
+      where: { id: groupeId, profId: user.id },
     });
     
     if (!groupe) {

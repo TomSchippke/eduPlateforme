@@ -22,7 +22,7 @@ export const authConfig: NextAuthConfig = {
       if (isOnLogin) {
         if (isLoggedIn) {
           const role = (auth?.user as { role?: string })?.role;
-          const redirectUrl = role === "PROF" ? "/prof/dashboard" : "/eleve/dashboard";
+          const redirectUrl = (role === "PROF" || role === "PROF_PRINCIPAL") ? "/prof/dashboard" : "/eleve/dashboard";
           return Response.redirect(new URL(redirectUrl, nextUrl));
         }
         return true;
@@ -41,7 +41,7 @@ export const authConfig: NextAuthConfig = {
       const isOnProf = nextUrl.pathname.startsWith("/prof");
       const isOnEleve = nextUrl.pathname.startsWith("/eleve");
 
-      if (isOnProf && role !== "PROF") {
+      if (isOnProf && role !== "PROF" && role !== "PROF_PRINCIPAL") {
         return Response.redirect(new URL("/eleve/dashboard", nextUrl));
       }
 

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   // Verify both belong to this tenant
   const [eleve, groupe] = await Promise.all([
     prisma.user.findFirst({ where: { id: parsed.data.eleveId, tenantId: user.tenantId, role: "ELEVE" } }),
-    prisma.groupe.findFirst({ where: { id: parsed.data.groupeId, profId: user.tenantId } }),
+    prisma.groupe.findFirst({ where: { id: parsed.data.groupeId, profId: user.id } }),
   ]);
 
   if (!eleve || !groupe) return NextResponse.json({ error: "Élève ou groupe non trouvé" }, { status: 404 });

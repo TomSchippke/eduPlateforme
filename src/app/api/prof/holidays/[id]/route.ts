@@ -19,7 +19,7 @@ export async function DELETE(
     where: { id },
   });
 
-  if (!holiday || holiday.profId !== user.tenantId) {
+  if (!holiday || holiday.profId !== user.id) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 
@@ -28,7 +28,7 @@ export async function DELETE(
   });
 
   // Regenerate schedules since holidays changed
-  await regenerateAllSchedules(user.tenantId);
+  await regenerateAllSchedules(user.id);
 
   return NextResponse.json({ success: true });
 }

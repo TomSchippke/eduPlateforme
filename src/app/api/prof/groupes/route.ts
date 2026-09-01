@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
   const groupe = await prisma.groupe.create({
     data: {
-      profId: user.tenantId,
+      profId: user.id,
       name: parsed.data.name,
       schoolYear: parsed.data.schoolYear,
     },
@@ -41,7 +41,7 @@ export async function GET() {
   if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const groupes = await prisma.groupe.findMany({
-    where: { profId: user.tenantId },
+    where: { profId: user.id },
     include: { _count: { select: { memberships: true, chapitres: true } } },
     orderBy: [{ isArchived: "asc" }, { createdAt: "desc" }],
   });

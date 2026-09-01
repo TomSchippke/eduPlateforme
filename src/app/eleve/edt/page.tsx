@@ -4,11 +4,16 @@ import { redirect } from "next/navigation";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 
-export default async function EleveEDTPage() {
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+
+export default async function EleveEDTPage(props: { searchParams: Promise<{ groupeId?: string }> }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as { id: string };
+  const searchParams = await props.searchParams;
+  const urlGroupeId = searchParams?.groupeId;
 
   const memberships = await prisma.groupeMembership.findMany({
     where: { 
@@ -17,8 +22,7 @@ export default async function EleveEDTPage() {
     },
     include: {
       groupe: {
-        include: {
-          cours: {
+        include: { prof: { select: { firstName: true, lastName: true } }, cours: {
             where: { dateTime: { gte: new Date() } },
             orderBy: { dateTime: "asc" },
             take: 20,
@@ -28,7 +32,11 @@ export default async function EleveEDTPage() {
     },
   });
 
-  const allCours = memberships
+  const groupes = memberships.filter(m => m.groupe).map(m => m.groupe);
+  const currentGroupe = urlGroupeId ? groupes.find(g => g.id === urlGroupeId) : groupes[0];
+  const filteredMemberships = currentGroupe ? memberships.filter(m => m.groupe?.id === currentGroupe.id) : memberships;
+
+  const allCours = filteredMemberships
     .filter((m) => m.groupe)
     .flatMap((m) =>
       m.groupe.cours.map((c) => ({ ...c, groupeName: m.groupe.name }))
@@ -37,6 +45,21 @@ export default async function EleveEDTPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {groupes.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {groupes.map((g) => (
+            <Link key={g.id} href={`/eleve/edt?groupeId=${g.id}`}>
+              <Badge
+                variant={currentGroupe?.id === g.id ? "info" : "outline"}
+                size="md"
+                className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
+              >
+                {g.name} - M/Mme {g.prof.lastName}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Emploi du temps</h1>
         <p className="text-slate-500 mt-1">Tes prochains cours</p>

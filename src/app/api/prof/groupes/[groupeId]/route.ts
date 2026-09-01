@@ -29,7 +29,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ group
     if (parsed.data.availableTags !== undefined) dataToUpdate.availableTags = parsed.data.availableTags;
 
     const groupe = await prisma.groupe.updateMany({
-      where: { id: groupeId, profId: user.tenantId },
+      where: { id: groupeId, profId: user.id },
       data: dataToUpdate,
     });
 
@@ -58,7 +58,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ grou
       where: { id: groupeId },
     });
 
-    if (!groupe || groupe.profId !== user.tenantId) {
+    if (!groupe || groupe.profId !== user.id) {
       return NextResponse.json({ error: "Groupe non trouvé ou accès refusé" }, { status: 404 });
     }
 

@@ -15,7 +15,7 @@ export default async function ProfLayout({
 
   const user = session.user as { role?: string; firstName?: string; lastName?: string };
 
-  if (user.role !== "PROF") {
+  if (user.role !== "PROF" && user.role !== "PROF_PRINCIPAL") {
     redirect("/eleve/dashboard");
   }
 
@@ -23,7 +23,7 @@ export default async function ProfLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <ProfSidebar userName={userName} />
+      <ProfSidebar userName={userName} role={user.role} />
       <main className="lg:ml-64 min-h-screen">
         <div className="p-6 lg:p-8 pt-16 lg:pt-8">{children}</div>
       </main>

@@ -20,7 +20,7 @@ export async function PATCH(
     include: { groupe: true }
   });
 
-  if (!cours || cours.groupe.profId !== user.tenantId) {
+  if (!cours || cours.groupe.profId !== user.id) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 
@@ -63,7 +63,7 @@ export async function DELETE(
     include: { groupe: true }
   });
 
-  if (!cours || cours.groupe.profId !== user.tenantId) {
+  if (!cours || cours.groupe.profId !== user.id) {
     return NextResponse.json({ error: "Introuvable" }, { status: 404 });
   }
 

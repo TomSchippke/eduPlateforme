@@ -32,7 +32,7 @@ export async function PUT(request: Request) {
       include: { groupe: { select: { profId: true } } },
     });
 
-    const allValid = dbChapitres.every((c) => c.groupe.profId === user.tenantId);
+    const allValid = dbChapitres.every((c) => c.groupe.profId === user.id);
     if (!allValid || dbChapitres.length !== chapitres.length) {
       return NextResponse.json({ error: "Chapitres non trouvés ou accès refusé" }, { status: 404 });
     }

@@ -27,7 +27,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ chapi
       include: { groupe: { select: { profId: true } } },
     });
 
-    if (!chapitre || chapitre.groupe.profId !== user.tenantId) {
+    if (!chapitre || chapitre.groupe.profId !== user.id) {
       return NextResponse.json({ error: "Chapitre non trouvé ou accès refusé" }, { status: 404 });
     }
 
@@ -61,7 +61,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ chap
       include: { groupe: { select: { profId: true } } },
     });
 
-    if (!chapitre || chapitre.groupe.profId !== user.tenantId) {
+    if (!chapitre || chapitre.groupe.profId !== user.id) {
       return NextResponse.json({ error: "Chapitre non trouvé ou accès refusé" }, { status: 404 });
     }
 

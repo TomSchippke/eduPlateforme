@@ -4,11 +4,16 @@ import { redirect } from "next/navigation";
 import { FileText, BookOpen, Download } from "lucide-react";
 import { StatusBadge } from "@/components/ui/badge";
 
-export default async function CoursPage() {
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+
+export default async function CoursPage(props: { searchParams: Promise<{ groupeId?: string }> }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const user = session.user as { id: string };
+  const searchParams = await props.searchParams;
+  const urlGroupeId = searchParams?.groupeId;
 
   const memberships = await prisma.groupeMembership.findMany({
     where: { 
@@ -17,8 +22,7 @@ export default async function CoursPage() {
     },
     include: {
       groupe: {
-        include: {
-          chapitres: {
+        include: { prof: { select: { firstName: true, lastName: true } }, chapitres: {
             orderBy: { order: "asc" },
             include: {
               documents: {
@@ -44,21 +48,38 @@ export default async function CoursPage() {
   });
 
   const groupes = memberships.filter((m) => m.groupe).map((m) => m.groupe);
+  const currentGroupe = urlGroupeId ? groupes.find(g => g.id === urlGroupeId) : groupes[0];
+  const displayGroupes = currentGroupe ? [currentGroupe] : [];
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {groupes.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {groupes.map((g) => (
+            <Link key={g.id} href={`/eleve/cours?groupeId=${g.id}`}>
+              <Badge
+                variant={currentGroupe?.id === g.id ? "info" : "outline"}
+                size="md"
+                className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
+              >
+                {g.name} - M/Mme {g.prof.lastName}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Mes cours</h1>
         <p className="text-slate-500 mt-1">Documents organisés par chapitre</p>
       </div>
 
-      {groupes.length === 0 ? (
+      {displayGroupes.length === 0 ? (
         <div className="text-center py-16">
           <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-500">Aucun cours disponible</p>
         </div>
       ) : (
-        groupes.map((groupe) => (
+        displayGroupes.map((groupe) => (
           <div key={groupe.id} className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-800">{groupe.name}</h2>
 

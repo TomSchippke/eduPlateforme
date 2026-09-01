@@ -18,10 +18,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-const navItems = [
+const allNavItems = [
   { href: "/prof/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/prof/groupes", label: "Groupes", icon: FolderOpen },
-  { href: "/prof/eleves", label: "Élèves", icon: Users },
+  { href: "/prof/professeurs", label: "Professeurs", icon: Users, roles: ["PROF_PRINCIPAL"] },
+  { href: "/prof/eleves", label: "Élèves", icon: Users, roles: ["PROF_PRINCIPAL"] },
   { href: "/prof/edt", label: "Emploi du temps", icon: Calendar },
   { href: "/prof/quotas", label: "Quotas IA", icon: BarChart3 },
   { href: "/prof/rentree", label: "Rentrée", icon: RefreshCcw },
@@ -29,11 +30,14 @@ const navItems = [
 
 interface ProfSidebarProps {
   userName: string;
+  role?: string;
 }
 
-export function ProfSidebar({ userName }: ProfSidebarProps) {
+export function ProfSidebar({ userName, role = "PROF" }: ProfSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = allNavItems.filter(item => !item.roles || item.roles.includes(role));
 
   return (
     <>
@@ -111,7 +115,7 @@ export function ProfSidebar({ userName }: ProfSidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{userName}</p>
-              <p className="text-xs text-slate-400">Professeur</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider">{role.replace("_", " ")}</p>
             </div>
           </div>
           <button

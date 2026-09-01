@@ -34,7 +34,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Document non trouvé" }, { status: 404 });
   }
 
-  if (document.chapitre.groupe.profId !== user.tenantId) {
+  if (document.chapitre.groupe.profId !== user.id) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 
@@ -86,7 +86,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Document non trouvé" }, { status: 404 });
   }
 
-  if (document.chapitre.groupe.profId !== user.tenantId) {
+  if (document.chapitre.groupe.profId !== user.id) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
 

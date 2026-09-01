@@ -19,7 +19,7 @@ export async function GET(
   const templates = await prisma.coursTemplate.findMany({
     where: { 
       groupeId,
-      groupe: { profId: user.tenantId }
+      groupe: { profId: user.id }
     },
     orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
   });
@@ -41,7 +41,7 @@ export async function POST(
 
   // Verify group belongs to prof
   const groupe = await prisma.groupe.findFirst({
-    where: { id: groupeId, profId: user.tenantId }
+    where: { id: groupeId, profId: user.id }
   });
   if (!groupe) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
