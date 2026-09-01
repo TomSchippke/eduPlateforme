@@ -74,7 +74,7 @@ export function GroupesList({ groupes }: { groupes: Groupe[] }) {
             {groupes.filter((g) => !g.isArchived).length} groupe(s) actif(s)
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
+        <Button onClick={() => setShowCreate(true)} className="tour-prof-create-group">
           <Plus className="h-4 w-4" />
           Nouveau groupe
         </Button>
@@ -124,7 +124,7 @@ export function GroupesList({ groupes }: { groupes: Groupe[] }) {
             <Link
               key={groupe.id}
               href={`/prof/groupes/${groupe.id}`}
-              className="card card-lift p-5 block"
+              className="card card-lift p-5 block tour-prof-group-card"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">

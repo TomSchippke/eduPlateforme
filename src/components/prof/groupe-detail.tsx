@@ -473,7 +473,7 @@ export function GroupeDetail({ groupe, allEleves }: GroupeDetailProps) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${isActive
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${tab.id === "stats" ? "tour-prof-stats" : ""} ${isActive
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
                   }`}
@@ -761,7 +761,7 @@ function ChapitresTab({
               <div className="flex gap-2">
                 <button
                   onClick={() => onUploadClick(chapitre.id)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  className="tour-prof-add-doc inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   Upload
@@ -1208,7 +1208,7 @@ function DSTab({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setShowCreate(true)} size="sm">
+        <Button onClick={() => setShowCreate(true)} size="sm" className="tour-prof-add-ds">
           <Plus className="h-4 w-4" />
           Nouveau DS
         </Button>
