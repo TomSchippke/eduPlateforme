@@ -20,6 +20,7 @@ const chatSchema = z.object({
   difficultyMode: z.enum(["AUTO", "FACILE", "MOYEN", "AVANCE"]).optional(),
   exerciseTypes: z.array(z.string()).optional(),
   selectedKeyword: z.string().optional(),
+  image: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
 
-    const { message, mode, groupeId, chapitreId, dateDSId, chapitresIdsRevise, conversationId, difficultyMode, exerciseTypes, selectedKeyword } =
+    const { message, mode, groupeId, chapitreId, dateDSId, chapitresIdsRevise, conversationId, difficultyMode, exerciseTypes, selectedKeyword, image } =
       parsed.data;
 
     // Validate word count (backend revalidation)
@@ -361,7 +362,36 @@ export async function POST(request: Request) {
       role: m.role as "user" | "assistant",
       content: m.content,
     }));
-    history.push({ role: "user", content: message });
+
+    let currentMessageContent: any = message;
+    if (mode === "EXPLIQUE" && image) {
+      let base64Data = image;
+      let mediaType = "image/jpeg";
+      if (image.startsWith("data:")) {
+        const matches = image.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+          mediaType = matches[1];
+          base64Data = matches[2];
+        }
+      }
+      
+      currentMessageContent = [
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mediaType,
+            data: base64Data
+          }
+        },
+        {
+          type: "text",
+          text: message
+        }
+      ];
+    }
+
+    history.push({ role: "user", content: currentMessageContent });
 
     // Call LLM
     const response = await chat(systemPrompt, history);
@@ -516,7 +546,7 @@ export async function POST(request: Request) {
           const isCorrect = data.correction.est_correct;
           if (isCorrect === true) cleanedResponse += "✅ **Correct !**\n\n";
           else if (isCorrect === false) cleanedResponse += "❌ **Incorrect.**\n\n";
-          else cleanedResponse += "💡 **Indication :**\n\n";
+          else cleanedResponse += "**Indication :**\n\n";
 
           cleanedResponse += `${data.correction.explication}\n\n`;
         }

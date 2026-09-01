@@ -13,6 +13,7 @@ import {
   ChevronDown,
   AlertCircle,
   X,
+  ImagePlus,
 } from "lucide-react";
 import React from "react";
 
@@ -100,10 +101,13 @@ export function ChatInterface({
   const [showConfig, setShowConfig] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [requestedBonus, setRequestedBonus] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [hasUsedImage, setHasUsedImage] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const wordCount = countWords(input);
   const isOverLimit = wordCount > MAX_WORDS;
@@ -121,6 +125,46 @@ export function ChatInterface({
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   }, [input]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        
+        // Max size 1024x1024
+        const MAX_SIZE = 1024;
+        if (width > height && width > MAX_SIZE) {
+          height = Math.round((height * MAX_SIZE) / width);
+          width = MAX_SIZE;
+        } else if (height > MAX_SIZE) {
+          width = Math.round((width * MAX_SIZE) / height);
+          height = MAX_SIZE;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Compress to JPEG, 70% quality
+          const base64 = canvas.toDataURL("image/jpeg", 0.7);
+          setSelectedImage(base64);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSend = useCallback(async (overrideMessage?: string) => {
     const messageContent = overrideMessage || input;
@@ -147,8 +191,13 @@ export function ChatInterface({
         conversationId,
       };
 
-      if (mode === "EXPLIQUE" && selectedChapitre) {
-        body.chapitreId = selectedChapitre;
+      if (mode === "EXPLIQUE") {
+        if (selectedChapitre) {
+          body.chapitreId = selectedChapitre;
+        }
+        if (selectedImage && !hasUsedImage) {
+          body.image = selectedImage;
+        }
       } else if (mode === "REVISE") {
         body.difficultyMode = difficultyMode;
         body.exerciseTypes = exerciseTypes;
@@ -174,6 +223,11 @@ export function ChatInterface({
       }
 
       const data = await res.json();
+
+      if (mode === "EXPLIQUE" && selectedImage && !hasUsedImage) {
+        setHasUsedImage(true);
+      }
+      setSelectedImage(null);
 
       // Save conversation ID for subsequent messages
       if (data.conversationId) {
@@ -207,6 +261,8 @@ export function ChatInterface({
     setMessages([]);
     setConversationId(null);
     setShowConfig(true);
+    setHasUsedImage(false);
+    setSelectedImage(null);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -667,6 +723,19 @@ export function ChatInterface({
           <p className="text-[10px] text-slate-400 text-center mb-2">
             L'IA peut faire des erreurs, pensez à toujours vérifier les réponses générées.
           </p>
+
+          {selectedImage && (
+            <div className="relative inline-block mb-3 ml-2">
+              <img src={selectedImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="absolute -top-2 -right-2 bg-white rounded-full p-0.5 shadow border border-slate-200 text-slate-500 hover:text-red-500"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               <textarea
@@ -697,6 +766,26 @@ export function ChatInterface({
                 {wordCount}/{MAX_WORDS}
               </div>
             </div>
+
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleImageSelect}
+            />
+
+            {mode === "EXPLIQUE" && !hasUsedImage && (
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={quotaRemaining <= 0 || loading}
+                title="Joindre une image (1 par session)"
+                className="shrink-0 h-[46px] w-[46px] rounded-xl p-0 border-slate-300 text-slate-500 hover:bg-slate-50"
+              >
+                <ImagePlus className="h-4 w-4" />
+              </Button>
+            )}
 
             <Button
               onClick={() => handleSend()}

@@ -8,7 +8,7 @@ const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
 
 export interface LLMMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | any[];
 }
 
 /**
