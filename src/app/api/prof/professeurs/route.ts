@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const parsed = z.object({
+    title: z.string().min(1),
     firstName: z.string().min(1),
     lastName: z.string().min(1),
     identifiant: z.string().min(2),
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const { firstName, lastName, identifiant, password } = parsed.data;
+  const { title, firstName, lastName, identifiant, password } = parsed.data;
 
   // Check existing identifiant
   let finalIdentifiant = identifiant;
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
 
   const prof = await prisma.user.create({
     data: {
+      title,
       firstName,
       lastName,
       identifiant: finalIdentifiant,

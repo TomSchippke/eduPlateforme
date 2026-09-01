@@ -32,9 +32,7 @@ export default async function EleveDashboardPage(props: {
     include: {
       groupe: {
         include: {
-          prof: {
-            select: { firstName: true, lastName: true },
-          },
+          prof: { select: { lastName: true, title: true } },
           annonces: { orderBy: { publishedAt: "desc" }, take: 3 },
           cours: {
             where: { dateTime: { gte: new Date() } },
@@ -115,7 +113,7 @@ export default async function EleveDashboardPage(props: {
                 size="md"
                 className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
               >
-                {g.name} - M/Mme {g.prof.lastName}
+                {g.name} - {g.prof.title} {g.prof.lastName}
               </Badge>
             </Link>
           ))}

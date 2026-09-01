@@ -20,6 +20,7 @@ interface Professeur {
   id: string;
   firstName: string;
   lastName: string;
+  title: string;
   identifiant: string;
 }
 
@@ -32,6 +33,7 @@ export function ProfesseursList({ professeurs }: { professeurs: Professeur[] }) 
   const [copied, setCopied] = useState(false);
 
   const [form, setForm] = useState({
+    title: "M/Mme",
     firstName: "",
     lastName: "",
     identifiant: "",
@@ -70,7 +72,7 @@ export function ProfesseursList({ professeurs }: { professeurs: Professeur[] }) 
       }
 
       setShowCreate(false);
-      setForm({ firstName: "", lastName: "", identifiant: "", password: "" });
+      setForm({ title: "M/Mme", firstName: "", lastName: "", identifiant: "", password: "" });
       router.refresh();
     } catch (error: any) {
       alert(error.message);
@@ -155,7 +157,7 @@ export function ProfesseursList({ professeurs }: { professeurs: Professeur[] }) 
                 <tr key={prof.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-slate-900">
-                      {prof.firstName} {prof.lastName}
+                      {prof.title} {prof.firstName} {prof.lastName}
                     </div>
                   </td>
                   <td className="px-6 py-4 font-mono text-slate-600">{prof.identifiant}</td>
@@ -201,6 +203,21 @@ export function ProfesseursList({ professeurs }: { professeurs: Professeur[] }) 
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Nouveau Professeur">
         <form onSubmit={handleCreate} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Civilité
+            </label>
+            <select
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="M">Masculin (M)</option>
+              <option value="Mme">Féminin (Mme)</option>
+              <option value="M/Mme">Autre (M / Mme)</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Prénom</label>

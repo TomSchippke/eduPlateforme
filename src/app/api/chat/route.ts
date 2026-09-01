@@ -209,7 +209,12 @@ export async function POST(request: Request) {
     let currentLevel = 3.0; // fallback
 
     if (mode === "EXPLIQUE") {
-      chunks = await searchChunks(message, chapitreIds);
+      let searchQuery = message;
+      // Enrich query if the user provides an image/document to help RAG find the exercise
+      if (image) {
+        searchQuery += " exercice énoncé";
+      }
+      chunks = await searchChunks(searchQuery, chapitreIds);
       context = buildContext(chunks);
       citations = formatCitations(chunks);
     } else {

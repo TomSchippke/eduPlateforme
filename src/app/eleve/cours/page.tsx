@@ -22,7 +22,7 @@ export default async function CoursPage(props: { searchParams: Promise<{ groupeI
     },
     include: {
       groupe: {
-        include: { prof: { select: { firstName: true, lastName: true } }, chapitres: {
+        include: { prof: { select: { firstName: true, lastName: true, title: true } }, chapitres: {
             orderBy: { order: "asc" },
             include: {
               documents: {
@@ -62,7 +62,7 @@ export default async function CoursPage(props: { searchParams: Promise<{ groupeI
                 size="md"
                 className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
               >
-                {g.name} - M/Mme {g.prof.lastName}
+                {g.name} - {g.prof.title} {g.prof.lastName}
               </Badge>
             </Link>
           ))}

@@ -51,6 +51,7 @@ model User {
   passwordHash String   @map("password_hash")
   firstName    String   @map("first_name")
   lastName     String   @map("last_name")
+  title        String   @default("M/Mme")
   role         Role
   tenantId     String   @map("tenant_id")
   isActive     Boolean  @default(true) @map("is_active")

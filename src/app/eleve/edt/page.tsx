@@ -22,7 +22,9 @@ export default async function EleveEDTPage(props: { searchParams: Promise<{ grou
     },
     include: {
       groupe: {
-        include: { prof: { select: { firstName: true, lastName: true } }, cours: {
+        include: { 
+          prof: { select: { title: true, lastName: true } }, 
+          cours: {
             where: { dateTime: { gte: new Date() } },
             orderBy: { dateTime: "asc" },
             take: 20,
@@ -54,7 +56,7 @@ export default async function EleveEDTPage(props: { searchParams: Promise<{ grou
                 size="md"
                 className="cursor-pointer whitespace-nowrap hover:bg-blue-50 transition-colors"
               >
-                {g.name} - M/Mme {g.prof.lastName}
+                {g.name} - {g.prof.title} {g.prof.lastName}
               </Badge>
             </Link>
           ))}

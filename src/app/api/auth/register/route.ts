@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const registerSchema = z.object({
+  title: z.string().min(1, "Civilité requise"),
   firstName: z.string().min(1, "Prénom requis"),
   lastName: z.string().min(1, "Nom requis"),
   identifiant: z.string().min(2, "Identifiant requis"),
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { firstName, lastName, identifiant, password } = parsed.data;
+    const { title, firstName, lastName, identifiant, password } = parsed.data;
 
     // Check if identifiant already exists
     const existing = await prisma.user.findUnique({
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     // Create the prof user — tenantId is their own ID
     const user = await prisma.user.create({
       data: {
+        title,
         firstName,
         lastName,
         identifiant,

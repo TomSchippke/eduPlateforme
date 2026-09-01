@@ -10,6 +10,7 @@ import { generateIdentifiantBase } from "@/lib/utils";
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
+    title: "M/Mme",
     firstName: "",
     lastName: "",
     identifiant: "",
@@ -53,6 +54,7 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          title: form.title,
           firstName: form.firstName,
           lastName: form.lastName,
           identifiant: form.identifiant,
@@ -100,6 +102,21 @@ export default function RegisterPage() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Civilité
+              </label>
+              <select
+                value={form.title}
+                onChange={(e) => updateForm("title", e.target.value)}
+                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="M">Masculin (M)</option>
+                <option value="Mme">Féminin (Mme)</option>
+                <option value="M/Mme">Autre (M / Mme)</option>
+              </select>
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="Prénom"
