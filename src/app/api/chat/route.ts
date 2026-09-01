@@ -522,7 +522,7 @@ export async function POST(request: Request) {
         }
 
         if (data.question) {
-          cleanedResponse += `**Question / Énoncé** : ${data.question.enonce}\n\n`;
+          cleanedResponse += `**Énoncé** : ${data.question.enonce}\n\n`;
           if (data.question.choix && Array.isArray(data.question.choix)) {
             const labels = ["A", "B", "C", "D"];
             data.question.choix.forEach((choix: string, i: number) => {

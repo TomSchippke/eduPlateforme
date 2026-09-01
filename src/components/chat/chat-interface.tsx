@@ -460,11 +460,10 @@ export function ChatInterface({
                           setExerciseTypes([...exerciseTypes, type.id]);
                         }
                       }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                        exerciseTypes.includes(type.id)
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${exerciseTypes.includes(type.id)
                           ? "bg-indigo-50 border-indigo-200 text-indigo-700"
                           : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       {type.label}
                     </button>
@@ -472,26 +471,26 @@ export function ChatInterface({
                 </div>
               </div>
 
-              {selectedChapitresRevise.length === 1 && 
+              {selectedChapitresRevise.length === 1 &&
                 (selectedGroupe.chapitres.find(c => c.id === selectedChapitresRevise[0])?.focusConcepts?.length ?? 0) > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Concept clé à cibler (optionnel)
-                  </label>
-                  <select
-                    value={selectedKeyword}
-                    onChange={(e) => setSelectedKeyword(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Aucun (Global au chapitre)</option>
-                    {selectedGroupe.chapitres
-                      .find(c => c.id === selectedChapitresRevise[0])
-                      ?.focusConcepts?.map((concept, idx) => (
-                        <option key={idx} value={concept}>{concept}</option>
-                      ))}
-                  </select>
-                </div>
-              )}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Concept clé à cibler (optionnel)
+                    </label>
+                    <select
+                      value={selectedKeyword}
+                      onChange={(e) => setSelectedKeyword(e.target.value)}
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Aucun (Global au chapitre)</option>
+                      {selectedGroupe.chapitres
+                        .find(c => c.id === selectedChapitresRevise[0])
+                        ?.focusConcepts?.map((concept, idx) => (
+                          <option key={idx} value={concept}>{concept}</option>
+                        ))}
+                    </select>
+                  </div>
+                )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -528,7 +527,7 @@ export function ChatInterface({
                   createdAt: new Date().toISOString(),
                 }]);
               } else {
-                handleSend("Je suis prêt(e) à réviser, pose-moi la première question !");
+                handleSend("Je suis prêt(e) à réviser, pose-moi la première question!");
               }
             }}
             disabled={(mode === "EXPLIQUE" && !selectedGroupe) || (mode === "REVISE" && exerciseTypes.length === 0)}
@@ -640,11 +639,11 @@ export function ChatInterface({
       {quotaRemaining <= 0 && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-3">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          Tu as utilisé tous tes chats du jour. Reviens demain ou 
+          Tu as utilisé tous tes chats du jour. Reviens demain ou
           {requestedBonus ? (
             <span className="font-medium text-emerald-600">demande envoyée au professeur !</span>
           ) : (
-            <button 
+            <button
               onClick={async () => {
                 try {
                   await fetch("/api/eleve/request-chats", { method: "POST" });
