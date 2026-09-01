@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 // Delete prof
 export async function DELETE(
   request: Request,
-  { params }: { params: { profId: string } }
+  props: { params: Promise<{ profId: string }> }
 ) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -13,6 +13,7 @@ export async function DELETE(
   const user = session.user as { tenantId: string; role: string; id: string };
   if (user.role !== "PROF_PRINCIPAL") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
+  const params = await props.params;
   const profId = params.profId;
 
   try {

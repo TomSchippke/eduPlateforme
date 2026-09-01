@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const user = session.user as { tenantId: string; role: string };
+  const user = session.user as { tenantId: string; role: string; id: string };
   if (user.role !== "PROF") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);

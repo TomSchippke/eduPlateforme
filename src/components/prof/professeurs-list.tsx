@@ -199,7 +199,7 @@ export function ProfesseursList({ professeurs }: { professeurs: Professeur[] }) 
         </div>
       </div>
 
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Nouveau Professeur">
+      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Nouveau Professeur">
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

@@ -13,7 +13,7 @@ export async function GET(
     }
 
     const { groupeId } = await params;
-    const user = session.user as { tenantId: string };
+    const user = session.user as { tenantId: string; id: string };
 
     // Check permissions
     const groupe = await prisma.groupe.findFirst({

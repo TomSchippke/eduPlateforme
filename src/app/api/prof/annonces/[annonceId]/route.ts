@@ -8,7 +8,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
-    const user = session?.user as { tenantId: string; role: string } | undefined;
+    const user = session?.user as { tenantId: string; role: string; id: string } | undefined;
     if (user?.role !== "PROF") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -39,7 +39,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    const user = session?.user as { tenantId: string; role: string } | undefined;
+    const user = session?.user as { tenantId: string; role: string; id: string } | undefined;
     if (user?.role !== "PROF") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

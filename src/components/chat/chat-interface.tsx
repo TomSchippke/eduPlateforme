@@ -64,6 +64,7 @@ interface ChatMessage {
   }>;
   chapterName?: string;
   createdAt?: string | Date;
+  hasImage?: boolean;
 }
 
 interface ChatInterfaceProps {
@@ -103,6 +104,7 @@ export function ChatInterface({
   const [requestedBonus, setRequestedBonus] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [hasUsedImage, setHasUsedImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -126,10 +128,7 @@ export function ChatInterface({
     }
   }, [input]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
+  const processFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -137,8 +136,6 @@ export function ChatInterface({
         const canvas = document.createElement("canvas");
         let width = img.width;
         let height = img.height;
-        
-        // Max size 1024x1024
         const MAX_SIZE = 1024;
         if (width > height && width > MAX_SIZE) {
           height = Math.round((height * MAX_SIZE) / width);
@@ -147,13 +144,11 @@ export function ChatInterface({
           width = Math.round((width * MAX_SIZE) / height);
           height = MAX_SIZE;
         }
-        
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // Compress to JPEG, 70% quality
           const base64 = canvas.toDataURL("image/jpeg", 0.7);
           setSelectedImage(base64);
         }
@@ -161,9 +156,32 @@ export function ChatInterface({
       img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
-    
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (mode === "EXPLIQUE" && !hasUsedImage) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (mode !== "EXPLIQUE" || hasUsedImage) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      processFile(file);
+    }
   };
 
   const handleSend = useCallback(async (overrideMessage?: string) => {
@@ -176,6 +194,7 @@ export function ChatInterface({
       role: "user",
       content: messageContent.trim(),
       createdAt: new Date().toISOString(),
+      hasImage: !!selectedImage && !hasUsedImage && mode === "EXPLIQUE",
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -691,6 +710,18 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-blue-50/90 backdrop-blur-sm border-2 border-dashed border-blue-400 rounded-xl flex items-center justify-center m-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <ImagePlus className="h-8 w-8" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Déposer l'image ici</h3>
+            <p className="text-sm text-slate-500 mt-1">Glissez-déposez votre capture ou photo</p>
+          </div>
+        </div>
+      )}
+      
       {/* Quota warning */}
       {quotaRemaining <= 0 && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-3">
@@ -736,9 +767,37 @@ export function ChatInterface({
             </div>
           )}
 
+          {/* Math Symbols Row */}
+          <div className="flex gap-1 mb-2 px-1 overflow-x-auto pb-1 hide-scrollbar">
+            {["√", "²", "³", "π", "θ", "Δ", "α", "β", "γ", "∞", "≠", "≤", "≥"].map((sym) => (
+              <button
+                key={sym}
+                onClick={() => {
+                  const el = textareaRef.current;
+                  if (!el) return;
+                  const start = el.selectionStart;
+                  const end = el.selectionEnd;
+                  const text = input;
+                  const before = text.substring(0, start);
+                  const after = text.substring(end, text.length);
+                  setInput(before + sym + after);
+                  setTimeout(() => {
+                    el.selectionStart = el.selectionEnd = start + sym.length;
+                    el.focus();
+                  }, 0);
+                }}
+                className="shrink-0 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded text-xs text-slate-600 hover:bg-slate-100 font-serif"
+              >
+                {sym}
+              </button>
+            ))}
+          </div>
+
           <div className="flex items-end gap-2">
-            <div className="flex-1 relative">
-              <textarea
+            <div className="flex-1 relative bg-white border border-slate-300 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
+              
+              <div className="flex flex-col w-full">
+                <textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -752,40 +811,44 @@ export function ChatInterface({
                 }
                 disabled={quotaRemaining <= 0 || loading}
                 rows={1}
-                className="w-full px-4 py-3 pr-16 rounded-xl border border-slate-300 bg-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400 max-h-32"
+                className="w-full px-4 py-3 bg-transparent text-sm resize-none focus:outline-none disabled:text-slate-400 max-h-32 rounded-xl"
               />
-              {/* Word counter */}
-              <div
-                className={`absolute bottom-2 right-14 text-xs px-1.5 py-0.5 rounded ${isOverLimit
-                  ? "text-red-600 bg-red-50 font-medium"
-                  : wordCount > MAX_WORDS * 0.8
-                    ? "text-amber-600"
-                    : "text-slate-400"
-                  }`}
-              >
-                {wordCount}/{MAX_WORDS}
+              
+              {/* Toolbar inside input */}
+              <div className="flex items-center justify-between px-2 pb-2">
+                <div className="flex items-center">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleImageSelect}
+                  />
+                  {mode === "EXPLIQUE" && !hasUsedImage && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={quotaRemaining <= 0 || loading}
+                      title="Joindre une image (1 par session)"
+                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+                {/* Word counter */}
+                <div
+                  className={`text-xs px-1.5 py-0.5 rounded ${isOverLimit
+                    ? "text-red-600 bg-red-50 font-medium"
+                    : wordCount > MAX_WORDS * 0.8
+                      ? "text-amber-600"
+                      : "text-slate-400"
+                    }`}
+                >
+                  {wordCount}/{MAX_WORDS}
+                </div>
               </div>
             </div>
-
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleImageSelect}
-            />
-
-            {mode === "EXPLIQUE" && !hasUsedImage && (
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={quotaRemaining <= 0 || loading}
-                title="Joindre une image (1 par session)"
-                className="shrink-0 h-[46px] w-[46px] rounded-xl p-0 border-slate-300 text-slate-500 hover:bg-slate-50"
-              >
-                <ImagePlus className="h-4 w-4" />
-              </Button>
-            )}
+            </div>
 
             <Button
               onClick={() => handleSend()}
