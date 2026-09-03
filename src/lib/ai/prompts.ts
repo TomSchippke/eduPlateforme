@@ -154,7 +154,7 @@ export function getReviseMoiPrompt(
     if (lvl < 3.0) return "Niveau 2 : COMPRÉHENSION (Questions demandant d'expliquer une notion avec ses propres mots, application directe de formule sur un cas très simple).";
     if (lvl < 4.0) return "Niveau 3 : APPLICATION (Cas classiques, exercices complets, distinction entre concepts proches, justification demandée).";
     if (lvl < 4.5) return "Niveau 4 : ANALYSE (Questions ouvertes complexes, raisonnement multi-étapes, exercices avec données superflues).";
-    return "Niveau 5 : SYNTHÈSE (Raisonnement expert, liens entre plusieurs chapitres/notions, exercices non guidés, démonstrations).";
+    return "Niveau 5 : SYNTHÈSE (Raisonnement expert, liens entre plusieurs chapitres/notions, exercices non guidés et non évidents, démonstrations).";
   };
 
   const currentDifficulty = getDifficultyDescription(currentLevel);
