@@ -8,7 +8,8 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user || (session.user as any).role !== "PROF") {
+    const userRole = (session?.user as any)?.role;
+    if (!session?.user || (userRole !== "PROF" && userRole !== "PROF_PRINCIPAL")) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
