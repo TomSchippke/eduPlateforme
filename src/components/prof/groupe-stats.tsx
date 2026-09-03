@@ -23,7 +23,7 @@ interface LevelData {
 
 interface ConversationData {
   id: string;
-  userId: string;
+  eleveId: string;
   mode: string;
   createdAt: string;
   _count: {
@@ -158,7 +158,7 @@ export function GroupeStats({ groupeId }: { groupeId: string }) {
   const studentsWithStats = data.students.map(s => {
     const sLevels = decayedLevels.filter(l => l.eleveId === s.id);
     const avgLevel = sLevels.length > 0 ? sLevels.reduce((acc, l) => acc + l.currentLevel, 0) / sLevels.length : 0;
-    const sConvs = data.conversations.filter(c => c.userId === s.id);
+    const sConvs = data.conversations.filter(c => c.eleveId === s.id);
     const totalMsgs = sConvs.reduce((acc, c) => acc + c._count.messages, 0);
     return { ...s, avgLevel, totalMsgs };
   }).sort((a, b) => b.avgLevel - a.avgLevel); // sort by level descending
