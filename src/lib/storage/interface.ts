@@ -12,13 +12,23 @@ import { VercelBlobStorage } from "./vercel_blob";
 export function getStorage(): StorageProvider {
   let provider = process.env.STORAGE_PROVIDER;
 
-  // Sur Vercel, le filesystem est en lecture seule — le local storage ne peut pas fonctionner.
-  // On force vercel_blob si le token est disponible, quel que soit STORAGE_PROVIDER.
-  if (process.env.VERCEL && process.env.BLOB_READ_WRITE_TOKEN) {
-    provider = "vercel_blob";
+  // Détection de l'environnement serverless (Vercel, AWS Lambda, etc.)
+  // Le filesystem est en lecture seule — le local storage ne peut pas fonctionner.
+  const isServerless = !!(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.cwd().startsWith("/var/task")
+  );
+
+  if (isServerless && provider === "local") {
+    console.warn(
+      `[Storage] STORAGE_PROVIDER="local" ignoré en environnement serverless. ` +
+      `BLOB_READ_WRITE_TOKEN=${process.env.BLOB_READ_WRITE_TOKEN ? "set" : "NOT SET"}`
+    );
+    provider = undefined;
   }
 
-  // En dehors de Vercel : fallback vers vercel_blob si le token est présent mais STORAGE_PROVIDER absent.
+  // Utiliser vercel_blob si le token est disponible
   if (!provider && process.env.BLOB_READ_WRITE_TOKEN) {
     provider = "vercel_blob";
   }
@@ -27,6 +37,8 @@ export function getStorage(): StorageProvider {
   if (!provider) {
     provider = "local";
   }
+
+  console.log(`[Storage] Using provider: ${provider}`);
 
   if (provider === "vercel_blob") {
     return new VercelBlobStorage();
