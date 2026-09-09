@@ -12,13 +12,18 @@ import { VercelBlobStorage } from "./vercel_blob";
 export function getStorage(): StorageProvider {
   let provider = process.env.STORAGE_PROVIDER;
 
-  // Si l'utilisateur a configuré Vercel Blob (token présent) mais oublié de définir STORAGE_PROVIDER,
-  // on utilise vercel_blob par défaut au lieu de crasher sur Vercel avec le local storage.
+  // Sur Vercel, le filesystem est en lecture seule — le local storage ne peut pas fonctionner.
+  // On force vercel_blob si le token est disponible, quel que soit STORAGE_PROVIDER.
+  if (process.env.VERCEL && process.env.BLOB_READ_WRITE_TOKEN) {
+    provider = "vercel_blob";
+  }
+
+  // En dehors de Vercel : fallback vers vercel_blob si le token est présent mais STORAGE_PROVIDER absent.
   if (!provider && process.env.BLOB_READ_WRITE_TOKEN) {
     provider = "vercel_blob";
   }
 
-  // Fallback final sur local
+  // Fallback final sur local (dev uniquement)
   if (!provider) {
     provider = "local";
   }
