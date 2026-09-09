@@ -12,6 +12,8 @@ import { VercelBlobStorage } from "./vercel_blob";
 export function getStorage(): StorageProvider {
   let provider = process.env.STORAGE_PROVIDER;
 
+  const KNOWN_PROVIDERS = ["local", "vercel_blob", "s3"];
+
   // Détection de l'environnement serverless (Vercel, AWS Lambda, etc.)
   // Le filesystem est en lecture seule — le local storage ne peut pas fonctionner.
   const isServerless = !!(
@@ -20,11 +22,17 @@ export function getStorage(): StorageProvider {
     process.cwd().startsWith("/var/task")
   );
 
+  // Valider que le provider est connu
+  if (provider && !KNOWN_PROVIDERS.includes(provider)) {
+    console.error(`[Storage] STORAGE_PROVIDER="${provider}" inconnu ! Valeurs acceptées : ${KNOWN_PROVIDERS.join(", ")}`);
+    // Tenter de corriger les typos courantes
+    if (provider.includes("blob") || provider.includes("vercel")) {
+      provider = "vercel_blob";
+    }
+  }
+
   if (isServerless && provider === "local") {
-    console.warn(
-      `[Storage] STORAGE_PROVIDER="local" ignoré en environnement serverless. ` +
-      `BLOB_READ_WRITE_TOKEN=${process.env.BLOB_READ_WRITE_TOKEN ? "set" : "NOT SET"}`
-    );
+    console.warn(`[Storage] STORAGE_PROVIDER="local" ignoré en environnement serverless.`);
     provider = undefined;
   }
 
@@ -35,6 +43,12 @@ export function getStorage(): StorageProvider {
 
   // Fallback final sur local (dev uniquement)
   if (!provider) {
+    if (isServerless) {
+      throw new Error(
+        "[Storage] Aucun provider de stockage configuré pour l'environnement serverless. " +
+        "Définissez STORAGE_PROVIDER=vercel_blob et BLOB_READ_WRITE_TOKEN dans vos variables d'environnement."
+      );
+    }
     provider = "local";
   }
 
