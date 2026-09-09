@@ -9,7 +9,7 @@ import mammoth from "mammoth";
 import fs from "fs/promises";
 
 // We use require to ensure the polyfill runs BEFORE pdf-parse is evaluated
-const PDFParse = require("pdf-parse");
+const { PDFParse } = require("pdf-parse");
 
 /**
  * Extract text content from a document buffer based on its file type.
