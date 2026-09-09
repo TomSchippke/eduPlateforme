@@ -1,12 +1,15 @@
-// Configure pdf.js worker BEFORE importing pdfjs-dist.
-// This avoids the dynamic import() that Next.js cannot bundle.
-// @ts-ignore -- no .d.ts for the worker .mjs entry
-import * as pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.mjs";
-(globalThis as any).pdfjsWorker = pdfjsWorker;
+// Polyfill for DOMMatrix which is required by some versions of pdf.js/pdf-parse
+if (typeof global !== "undefined" && typeof global.DOMMatrix === "undefined") {
+  (global as any).DOMMatrix = class DOMMatrix {
+    constructor() { }
+  };
+}
 
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
 import fs from "fs/promises";
+
+// We use require to ensure the polyfill runs BEFORE pdf-parse is evaluated
+const { PDFParse } = require("pdf-parse");
 
 /**
  * Extract text content from a document buffer based on its file type.
@@ -35,33 +38,13 @@ export async function extractText(
  */
 async function extractFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const data = new Uint8Array(buffer);
-    const loadingTask = getDocument({
-      data,
-      useSystemFonts: true,
-    });
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    const info = await parser.getInfo();
+    await parser.destroy();
 
-    const pdf = await loadingTask.promise;
-    const numPages = pdf.numPages;
-    const parts: string[] = [];
-
-    for (let i = 1; i <= numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(" ");
-
-      if (pageText.trim()) {
-        if (numPages > 1) {
-          parts.push(`---PAGE ${i}---\n${pageText}`);
-        } else {
-          parts.push(pageText);
-        }
-      }
-    }
-
-    const text = parts.join("\n");
+    const text = result.text;
+    const numPages = info.total;
 
     if (!text || text.trim().length < 50) {
       throw new Error(
@@ -71,7 +54,24 @@ async function extractFromPDF(buffer: Buffer): Promise<string> {
       );
     }
 
-    return text;
+    // Add page markers for chunking
+    if (numPages <= 1) {
+      return text;
+    }
+
+    const avgCharsPerPage = Math.ceil(text.length / numPages);
+    const parts: string[] = [];
+
+    for (let i = 0; i < numPages; i++) {
+      const start = i * avgCharsPerPage;
+      const end = Math.min((i + 1) * avgCharsPerPage, text.length);
+      const pageText = text.substring(start, end);
+      if (pageText.trim()) {
+        parts.push(`---PAGE ${i + 1}---\n${pageText}`);
+      }
+    }
+
+    return parts.join("\n");
   } catch (error) {
     if (error instanceof Error && error.message.includes("scan")) {
       throw error;
